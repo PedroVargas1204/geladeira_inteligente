@@ -1,0 +1,10 @@
+[
+  {
+    "nome": "tomate",
+    "quantidade": 3.0,
+    "unidade": "unid",
+    "categoria": "Legumes",
+    "status": "consumido",
+    "data": "2026-06-18"
+  }
+]

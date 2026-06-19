@@ -1,0 +1,26 @@
+[
+  {
+    "nome": "tomate",
+    "quantidade": 2.0,
+    "unidade": "unid",
+    "local": "despensa",
+    "data_compra": "2026-06-17",
+    "data_validade": "2026-06-20"
+  },
+  {
+    "nome": "frango",
+    "quantidade": 500.0,
+    "unidade": "g",
+    "local": "freezer",
+    "data_compra": "2026-06-10",
+    "data_validade": "2026-12-07"
+  },
+  {
+    "nome": "frango",
+    "quantidade": 200.0,
+    "unidade": "g",
+    "local": "geladeira",
+    "data_compra": "2026-06-17",
+    "data_validade": "2026-06-19"
+  }
+]

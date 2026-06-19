@@ -1,0 +1,91 @@
+{
+  "tomate": {
+    "categoria": "Legumes",
+    "sinonimos": ["tomate italiano", "tomate cereja", "tomates"],
+    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 60 },
+    "preco_kg": 8.0,
+    "co2_kg": 1.4,
+    "agua_litros_kg": 214
+  },
+  "alface": {
+    "categoria": "Verduras",
+    "sinonimos": ["alface americana", "alface crespa"],
+    "validade_dias": { "geladeira": 5, "despensa": 1, "freezer": 30 },
+    "preco_kg": 6.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 130
+  },
+  "banana": {
+    "categoria": "Frutas",
+    "sinonimos": ["banana prata", "banana nanica", "bananas"],
+    "validade_dias": { "geladeira": 7, "despensa": 4, "freezer": 90 },
+    "preco_kg": 5.0,
+    "co2_kg": 0.7,
+    "agua_litros_kg": 790
+  },
+  "maca": {
+    "categoria": "Frutas",
+    "sinonimos": ["maçã", "maca verde", "maca gala", "macas",""],
+    "validade_dias": { "geladeira": 21, "despensa": 7, "freezer": 120 },
+    "preco_kg": 9.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 822
+  },
+  "leite": {
+    "categoria": "Laticínios",
+    "sinonimos": ["leite integral", "leite desnatado"],
+    "validade_dias": { "geladeira": 5, "despensa": 90, "freezer": 30 },
+    "preco_kg": 5.5,
+    "co2_kg": 3.2,
+    "agua_litros_kg": 1020
+  },
+  "ovo": {
+    "categoria": "Proteínas",
+    "sinonimos": ["ovos", "ovo de galinha"],
+    "validade_dias": { "geladeira": 28, "despensa": 14, "freezer": 0 },
+    "preco_kg": 12.0,
+    "co2_kg": 4.5,
+    "agua_litros_kg": 3300
+  },
+  "frango": {
+    "categoria": "Proteínas",
+    "sinonimos": ["peito de frango", "file de frango", "coxa de frango"],
+    "validade_dias": { "geladeira": 2, "despensa": 0, "freezer": 180 },
+    "preco_kg": 18.0,
+    "co2_kg": 6.9,
+    "agua_litros_kg": 4325
+  },
+    "bovino": {
+    "categoria": "Proteínas",
+    "sinonimos": ["patinho", "picanha","cupim","fraldinha"],
+    "validade_dias": { "geladeira": 2, "despensa": 0, "freezer": 180 },
+    "preco_kg": 23.0,
+    "co2_kg": 6.9,
+    "agua_litros_kg": 4325
+  },
+  "arroz": {
+    "categoria": "Grãos",
+    "sinonimos": ["arroz branco", "arroz integral"],
+    "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
+    "preco_kg": 6.0,
+    "co2_kg": 2.7,
+    "agua_litros_kg": 2500
+  },
+  "pao": {
+    "categoria": "Padaria",
+    "sinonimos": ["pão", "pão de forma", "pao frances", "pão francês"],
+    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 30 },
+    "preco_kg": 12.0,
+    "co2_kg": 1.1,
+    "agua_litros_kg": 1608
+  },
+  "cenoura": {
+    "categoria": "Legumes",
+    "sinonimos": ["cenouras"],
+    "validade_dias": { "geladeira": 21, "despensa": 5, "freezer": 90 },
+    "preco_kg": 5.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 195
+  }
+
+}
