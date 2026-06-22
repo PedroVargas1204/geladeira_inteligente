@@ -1,2 +1,4 @@
 nome,quantidade,unidade,categoria,status,data
 tomate,3.0,unid,Legumes,consumido,2026-06-18
+tomate,1.0,unid,Legumes,consumido,2026-06-22
+frango,200.0,g,Proteínas,consumido,2026-06-22

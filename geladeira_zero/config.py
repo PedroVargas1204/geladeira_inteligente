@@ -40,6 +40,8 @@ DIAS_ALERTA_AMPLO = 7
 # Quantos segundos esperar pela IA antes de desistir e usar o plano B.
 TIMEOUT_IA = 20
 
+# Unidades válidas para nao quebrar
+UNIDADES_VALIDAS = ["kg","g","l","ml","unid"]
 # Quando o item é contado em "unid" (unidade), quanto pesa em kg cada um.
 # Usado para converter tudo para kg antes de somar o impacto.
 PESO_UNIDADE_KG = 0.2

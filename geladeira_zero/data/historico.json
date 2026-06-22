@@ -6,5 +6,21 @@
     "categoria": "Legumes",
     "status": "consumido",
     "data": "2026-06-18"
+  },
+  {
+    "nome": "tomate",
+    "quantidade": 1.0,
+    "unidade": "unid",
+    "categoria": "Legumes",
+    "status": "consumido",
+    "data": "2026-06-22"
+  },
+  {
+    "nome": "frango",
+    "quantidade": 200.0,
+    "unidade": "g",
+    "categoria": "Proteínas",
+    "status": "consumido",
+    "data": "2026-06-22"
   }
 ]

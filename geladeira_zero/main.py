@@ -28,7 +28,7 @@ import impacto
 # CARREGAR / SALVAR TODO O ESTADO
 # ---------------------------------------------------------------------------
 def carregar_tudo():
-    """Lê os 5 arquivos JSON e devolve um dicionário com todo o estado."""
+    """Lê os arquivos JSON e devolve um dicionário com todo o estado."""
     return {
         "base": persistencia.carregar_json(config.ARQ_BASE_ALIMENTOS, {}),
         "inventario": persistencia.carregar_json(config.ARQ_INVENTARIO, []),
@@ -140,8 +140,10 @@ def acao_marcar(estado):
         interface.pausar()
         return
 
+    # Mostra também a quantidade, para o usuário decidir o consumo parcial.
     for i, item in enumerate(ordenado):
-        interface.linha(f"[{i}] {item['nome']} - vence {item['data_validade']}")
+        interface.linha(f"[{i}] {item['nome']} - {item['quantidade']}"
+                        f"{item['unidade']} - vence {item['data_validade']}")
     interface.borda()
 
     indice = interface.ler_inteiro("Número do item: ", minimo=0,
@@ -149,17 +151,38 @@ def acao_marcar(estado):
     item_escolhido = ordenado[indice]
     # Acha a posição real do item na lista original (a ordenada é uma cópia).
     real = estado["inventario"].index(item_escolhido)
+    qtd_atual = item_escolhido["quantidade"]
+    unidade = item_escolhido["unidade"]
 
     print("[1] Consumido   [2] Descartado")
     escolha = interface.ler_opcao("Opção: ", ["1", "2"])
+
+    # Pergunta QUANTO. ENTER (vazio) = tudo. Nunca aceita mais do que existe.
+    print(f"Quantidade disponível: {qtd_atual}{unidade}")
+    qtd = interface.ler_float(
+        f"Quanto? (máx {qtd_atual}, ENTER = tudo): ",
+        minimo=0.01, maximo=qtd_atual, padrao=qtd_atual,
+    )
+    parcial = qtd < qtd_atual
+    resto = round(qtd_atual - qtd, 4)
+
     if escolha == "1":
         inv.marcar_consumido(estado["inventario"], estado["historico"], real,
-                             estado["base"])
-        print("  + Marcado como consumido (entrou na economia).")
+                             estado["base"], qtd)
+        if parcial:
+            print(f"  + Consumido {qtd}{unidade}. Restam {resto}{unidade} "
+                  f"no inventário.")
+        else:
+            print("  + Item totalmente consumido (entrou na economia).")
     else:
         inv.marcar_descartado(estado["inventario"], estado["historico"], real,
-                              estado["base"])
-        print("  - Marcado como descartado.")
+                              estado["base"], qtd)
+        if parcial:
+            print(f"  - Descartado {qtd}{unidade}. Restam {resto}{unidade} "
+                  f"no inventário.")
+        else:
+            print("  - Item totalmente descartado.")
+
     salvar_tudo(estado)
     interface.pausar()
 
@@ -184,17 +207,29 @@ def acao_impacto(estado):
 
 
 def acao_configuracoes(estado):
-    """Preferências do usuário (RF10)."""
+    """Preferências do usuário (RF10).
+
+    Lê TODOS os campos em variáveis locais primeiro. Se o usuário apertar ESC
+    no meio, a OperacaoCancelada sobe sem ter alterado nada no estado. Só
+    quando todos os campos foram preenchidos é que gravamos de uma vez.
+    """
     interface.desenhar_titulo("Configurações")
     u = estado["usuario"]
-    u["nome"] = interface.ler_texto("Seu nome: ", obrigatorio=False) or u.get("nome", "")
-    u["vegetariano"] = interface.ler_sim_nao("Vegetariano?")
-    u["vegano"] = interface.ler_sim_nao("Vegano?")
-    alergias = interface.ler_texto("Alergias (separadas por vírgula): ",
-                                   obrigatorio=False)
-    u["alergias"] = [a.strip() for a in alergias.split(",") if a.strip()]
-    u["tempo_max_receita"] = interface.ler_inteiro("Tempo máx. de receita (min): ",
-                                                   minimo=5, maximo=240)
+
+    nome = interface.ler_texto("Seu nome: ", obrigatorio=False) or u.get("nome", "")
+    vegetariano = interface.ler_sim_nao("Vegetariano?")
+    vegano = interface.ler_sim_nao("Vegano?")
+    alergias_txt = interface.ler_texto("Alergias (separadas por vírgula): ",
+                                       obrigatorio=False)
+    tempo = interface.ler_inteiro("Tempo máx. de receita (min): ",
+                                  minimo=5, maximo=240)
+
+    # Chegou aqui: tudo válido e ninguém cancelou. Grava de uma vez.
+    u["nome"] = nome
+    u["vegetariano"] = vegetariano
+    u["vegano"] = vegano
+    u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
+    u["tempo_max_receita"] = tempo
     salvar_tudo(estado)
     print("  + Preferências salvas.")
     interface.pausar()
@@ -251,13 +286,22 @@ def main():
         print("[5] Marcar consumido/desc.[6] Ver impacto")
         print("[7] Configurações         [8] Exportar CSV")
         print("[0] Sair")
+        print("\n(dica: aperte ESC em qualquer campo para voltar ao menu)")
 
-        opcao = interface.ler_opcao("\nEscolha: ",
-                                    ["0", "1", "2", "3", "4", "5", "6", "7", "8"])
+        opcao = interface.ler_opcao(
+            "\nEscolha: ",
+            ["0", "1", "2", "3", "4", "5", "6", "7", "8"],
+            cancelavel=False,   # no menu, ESC não faz sentido
+        )
         if opcao == "0":
             print("Até logo! Menos desperdício. :)")
             break
-        acoes[opcao](estado)  # roteia para a função certa
+
+        try:
+            acoes[opcao](estado)  # roteia para a função certa
+        except interface.OperacaoCancelada:
+            print("\n  Operação cancelada. Nenhuma alteração foi salva.")
+            interface.pausar()
 
 
 # Só executa main() se este arquivo for rodado direto (python main.py),

@@ -5,7 +5,8 @@ O miolo do produto. Cuida do estoque:
 - busca tolerante de alimentos no catálogo;
 - cálculo da validade de cada item;
 - cadastro e listagem (ordenada por validade);
-- mover itens para o histórico quando consumidos ou descartados.
+- mover itens para o histórico quando consumidos ou descartados,
+  agora com suporte a CONSUMO PARCIAL (consumir só parte da quantidade).
 
 Responsável (slides): Pessoa B
 """
@@ -84,14 +85,31 @@ def listar_ordenado(inventario):
 
 
 # ---------------------------------------------------------------------------
-# CONSUMIR / DESCARTAR  -> move para o histórico
+# CONSUMIR / DESCARTAR  -> move para o histórico (com consumo parcial)
 # ---------------------------------------------------------------------------
-def _mover_para_historico(inventario, historico, indice, status, base):
+def _mover_para_historico(inventario, historico, indice, status, base,
+                          quantidade=None):
     """
-    Tira o item da posição `indice` do inventário e o adiciona ao histórico
-    com o `status` ("consumido" ou "descartado") e a data de hoje.
+    Move (total ou parcialmente) o item da posição `indice` para o histórico.
+
+    - Se `quantidade` for None ou >= a quantidade do item: move o item INTEIRO
+      e o remove do inventário (comportamento antigo).
+    - Se `quantidade` for menor: registra no histórico apenas a parte usada
+      e REDUZ a quantidade do item, que continua no inventário (consumo parcial).
+
+    O histórico guarda sempre a quantidade efetivamente movida, então o cálculo
+    de impacto continua correto automaticamente.
     """
-    item = inventario.pop(indice)  # remove do inventário e guarda numa variável
+    item = inventario[indice]
+    qtd_total = item["quantidade"]
+
+    # Decide se é movimento total ou parcial.
+    if quantidade is None or quantidade >= qtd_total:
+        quantidade_movida = qtd_total
+        mover_tudo = True
+    else:
+        quantidade_movida = quantidade
+        mover_tudo = False
 
     # Descobre a categoria pelo catálogo (para o impacto agregar depois).
     _, dados = buscar_alimento_por_nome(item["nome"], base)
@@ -99,19 +117,30 @@ def _mover_para_historico(inventario, historico, indice, status, base):
 
     registro = {
         "nome": item["nome"],
-        "quantidade": item["quantidade"],
+        "quantidade": quantidade_movida,
         "unidade": item["unidade"],
         "categoria": categoria,
         "status": status,
         "data": datetime.now().strftime("%Y-%m-%d"),
     }
     historico.append(registro)
+
+    if mover_tudo:
+        inventario.pop(indice)  # remove o item inteiro
+    else:
+        # round evita sobras feias de float (ex.: 0.30000000000000004).
+        item["quantidade"] = round(qtd_total - quantidade_movida, 4)
+
     return inventario, historico
 
 
-def marcar_consumido(inventario, historico, indice, base):
-    return _mover_para_historico(inventario, historico, indice, "consumido", base)
+def marcar_consumido(inventario, historico, indice, base, quantidade=None):
+    """Marca como consumido. Se `quantidade` vier, consome só essa parte."""
+    return _mover_para_historico(inventario, historico, indice, "consumido",
+                                 base, quantidade)
 
 
-def marcar_descartado(inventario, historico, indice, base):
-    return _mover_para_historico(inventario, historico, indice, "descartado", base)
+def marcar_descartado(inventario, historico, indice, base, quantidade=None):
+    """Marca como descartado. Se `quantidade` vier, descarta só essa parte."""
+    return _mover_para_historico(inventario, historico, indice, "descartado",
+                                 base, quantidade)

@@ -45,8 +45,7 @@ def converter_para_kg(quantidade, unidade):
 # ---------------------------------------------------------------------------
 def calcular_impacto(historico, base):
     """
-    Soma o impacto dos itens CONSUMIDOS. Devolve uma TUPLA com 4 valores
-    (slide 8: "retorno múltiplo"):
+    Soma o impacto dos itens CONSUMIDOS. Devolve uma TUPLA com 4 valores:
         (kg_total, co2_total, agua_total, reais_total)
     """
     kg_total = 0.0
@@ -56,7 +55,7 @@ def calcular_impacto(historico, base):
 
     for registro in historico:
         if registro.get("status") != "consumido":
-            continue  # descartados não contam como economia
+            continue
 
         kg = converter_para_kg(registro["quantidade"], registro["unidade"])
         dados = persistencia.buscar_alimento_na_base(registro["nome"], base)
@@ -64,9 +63,9 @@ def calcular_impacto(historico, base):
             continue
 
         kg_total    += kg
-        co2_total   += kg * dados["co2_kg"]
-        agua_total  += kg * dados["agua_litros_kg"]
-        reais_total += kg * dados["preco_kg"]
+        co2_total   += kg * dados.get("co2_kg", 0)
+        agua_total  += kg * dados.get("agua_litros_kg", 0)
+        reais_total += kg * dados.get("preco_kg", 0)
 
     return kg_total, co2_total, agua_total, reais_total
 
