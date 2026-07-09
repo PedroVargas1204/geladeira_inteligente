@@ -22,5 +22,77 @@
     "categoria": "Proteínas",
     "status": "consumido",
     "data": "2026-06-22"
+  },
+  {
+    "nome": "bovino",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Proteínas",
+    "status": "descartado",
+    "data": "2026-07-08"
+  },
+  {
+    "nome": "frango",
+    "quantidade": 499.5,
+    "unidade": "g",
+    "categoria": "Proteínas",
+    "status": "consumido",
+    "data": "2026-07-08"
+  },
+  {
+    "nome": "tomate",
+    "quantidade": 1.0,
+    "unidade": "unid",
+    "categoria": "Legumes",
+    "status": "consumido",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "bovino",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Proteínas",
+    "status": "consumido",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "bovino",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Proteínas",
+    "status": "consumido",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "pao",
+    "quantidade": 3.0,
+    "unidade": "unid",
+    "categoria": "Padaria",
+    "status": "consumido",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "tomate",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Legumes",
+    "status": "consumido",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "leite",
+    "quantidade": 1.0,
+    "unidade": "l",
+    "categoria": "Laticínios",
+    "status": "consumido",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "frango",
+    "quantidade": 0.5,
+    "unidade": "g",
+    "categoria": "Proteínas",
+    "status": "consumido",
+    "data": "2026-07-09"
   }
 ]

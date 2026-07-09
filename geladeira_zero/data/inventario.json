@@ -1,26 +1,10 @@
 [
   {
-    "nome": "tomate",
-    "quantidade": 1.0,
-    "unidade": "unid",
-    "local": "despensa",
-    "data_compra": "2026-06-17",
-    "data_validade": "2026-06-20"
-  },
-  {
-    "nome": "frango",
-    "quantidade": 500.0,
-    "unidade": "g",
-    "local": "freezer",
-    "data_compra": "2026-06-10",
-    "data_validade": "2026-12-07"
-  },
-  {
-    "nome": "pao",
+    "nome": "ovo",
     "quantidade": 3.0,
-    "unidade": "unid",
+    "unidade": "unide",
     "local": "despensa",
-    "data_compra": "2026-06-19",
-    "data_validade": "2026-06-22"
+    "data_compra": "2026-05-09",
+    "data_validade": "2026-05-23"
   }
 ]

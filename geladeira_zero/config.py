@@ -57,6 +57,12 @@ LOCAIS_VALIDOS = ["geladeira", "despensa", "freezer"]
 # ---------------------------------------------------------------------------
 # Endpoint e modelo. A CHAVE não fica aqui: vem da variável de ambiente
 # IA_API_KEY (senha fora do código). Veja ia.py.
-IA_API_URL = "https://api.anthropic.com/v1/messages"
-IA_MODEL   = "claude-sonnet-4-6"
+IA_MODEL   = "gemini-2.5-flash"
+IA_API_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    f"{IA_MODEL}:generateContent"
+)
 IA_NOME_VARIAVEL_CHAVE = "IA_API_KEY"
+
+# 
+#  essa é a chave

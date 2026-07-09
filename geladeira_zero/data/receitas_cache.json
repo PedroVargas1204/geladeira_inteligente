@@ -1,1 +1,29 @@
-{}
+{
+  "bovino+bovino+pao+tomate": {
+    "titulo": "Picadinho de Carne com Tomate e Torradas",
+    "ingredientes": [
+      "500g de carne bovina (ex: acém, patinho) cortada em cubos pequenos",
+      "2 tomates médios maduros, picados",
+      "4 fatias de pão (amanhecido, se possível)",
+      "2 colheres de sopa de azeite de oliva",
+      "1 cebola média picada (item de despensa assumido)",
+      "2 dentes de alho picados (item de despensa assumido)",
+      "1/2 xícara de água ou caldo de carne (item de despensa assumido)",
+      "Sal e pimenta do reino a gosto (itens de despensa assumidos)",
+      "Cheiro-verde picado a gosto (salsinha e cebolinha, item de despensa assumido)"
+    ],
+    "modo_preparo": [
+      "Seque bem os cubos de carne com papel toalha.",
+      "Em uma panela ou frigideira grande, aqueça o azeite em fogo médio-alto.",
+      "Adicione a carne e doure bem por todos os lados. Retire a carne da panela e reserve.",
+      "Na mesma panela, adicione a cebola picada e refogue até ficar translúcida, cerca de 3-5 minutos.",
+      "Acrescente o alho picado e refogue por mais 1 minuto, até ficar aromático.",
+      "Retorne a carne para a panela. Adicione os tomates picados, sal e pimenta do reino a gosto.",
+      "Despeje a água ou caldo de carne, raspe o fundo da panela para soltar qualquer resíduo dourado.",
+      "Reduza o fogo para médio-baixo, tampe a panela e cozinhe por cerca de 20-25 minutos, ou até a carne ficar macia e o molho encorpado. Se necessário, adicione mais um pouco de água durante o cozimento.",
+      "Enquanto o picadinho cozinha, corte as fatias de pão em cubos ou em formato de torradas. Você pode aquecê-los em uma frigideira com um fio de azeite ou no forno até ficarem crocantes.",
+      "Verifique o tempero do picadinho e ajuste se necessário. Finalize com cheiro-verde picado.",
+      "Sirva o picadinho de carne quente, acompanhado das torradas."
+    ]
+  }
+}

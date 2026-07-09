@@ -28,18 +28,13 @@ except ImportError:
 # 1) ESCOLHER OS INGREDIENTES
 # ---------------------------------------------------------------------------
 def selecionar_ingredientes(inventario):
-    """
-    Escolhe quais ingredientes usar na receita (slide 7).
-
-    Reaproveita calcular_alertas() para pegar primeiro o que vence antes.
-    Se não houver itens urgentes, amplia a janela (DIAS_ALERTA_AMPLO).
-    """
     urgentes = alertas.calcular_alertas(inventario, config.DIAS_ALERTA)
     if not urgentes:
         urgentes = alertas.calcular_alertas(inventario, config.DIAS_ALERTA_AMPLO)
-
-    # Pega só os nomes dos itens (descartando o número de dias da tupla).
-    return [item["nome"] for (item, dias) in urgentes]
+    if urgentes:
+        return [item["nome"] for (item, dias) in urgentes]
+    # Nada perto de vencer: usa tudo que tem na geladeira.
+    return [item["nome"] for item in inventario]
 
 
 # ---------------------------------------------------------------------------
@@ -60,13 +55,19 @@ def montar_prompt(ingredientes, usuario):
 
     texto_restricoes = "; ".join(restricoes) if restricoes else "nenhuma"
     tempo = usuario.get("tempo_max_receita", 60)
+    itens_txt = ", ".join(ingredientes) if ingredientes else "o que houver"
 
     return (
-        "Você é um chef que evita desperdício. Crie UMA receita simples usando "
-        f"prioritariamente estes ingredientes: {', '.join(ingredientes)}. "
-        f"Restrições: {texto_restricoes}. Tempo máximo: {tempo} minutos. "
-        "Responda em JSON com as chaves: titulo (string), "
-        "ingredientes (lista de strings) e modo_preparo (lista de strings)."
+        "Você é um chef que evita desperdício de alimentos. "
+        f"Tenho estes alimentos precisando ser usados logo: {itens_txt}. "
+        "Crie UMA receita simples e prática que aproveite o máximo deles "
+        "(pode assumir itens básicos de despensa como sal, azeite e temperos). "
+        f"Restrições alimentares: {texto_restricoes}. "
+        f"Tempo máximo de preparo: {tempo} minutos. "
+        "Responda APENAS com um objeto JSON válido, sem nenhum texto antes "
+        'ou depois, no formato: {"titulo": string, '
+        '"ingredientes": [lista de strings com as quantidades], '
+        '"modo_preparo": [lista de strings, um passo por item]}.'
     )
 
 
@@ -75,10 +76,8 @@ def montar_prompt(ingredientes, usuario):
 # ---------------------------------------------------------------------------
 def consultar_ia(prompt):
     """
-    Chama a API da IA. A chave vem da variável de ambiente IA_API_KEY
-    (senha FORA do código). Tem timeout para não travar para sempre.
-
-    Levanta uma exceção se algo falhar — quem chama trata e cai no fallback.
+    Chama a API do Gemini. A chave vem da variável de ambiente IA_API_KEY.
+    Levanta exceção se algo falhar — quem chama trata e cai no fallback.
     """
     chave = os.environ.get(config.IA_NOME_VARIAVEL_CHAVE)
     if not chave:
@@ -87,26 +86,28 @@ def consultar_ia(prompt):
         raise RuntimeError("Biblioteca 'requests' não instalada.")
 
     cabecalhos = {
-        "x-api-key": chave,
-        "anthropic-version": "2023-06-01",
+        "x-goog-api-key": chave,
         "content-type": "application/json",
     }
     corpo = {
-        "model": config.IA_MODEL,
-        "max_tokens": 800,
-        "messages": [{"role": "user", "content": prompt}],
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "maxOutputTokens": 4000,                  # antes era 800
+            "responseMimeType": "application/json",
+            "thinkingConfig": {"thinkingBudget": 0},  # desliga o "pensamento"
+        },
     }
 
     resposta = requests.post(
         config.IA_API_URL,
         headers=cabecalhos,
         json=corpo,
-        timeout=config.TIMEOUT_IA,  # desiste após N segundos
+        timeout=config.TIMEOUT_IA,
     )
-    resposta.raise_for_status()             # erro HTTP vira exceção
+    resposta.raise_for_status()
     dados = resposta.json()
-    texto = dados["content"][0]["text"]     # extrai o texto da resposta
-    return json.loads(texto)                # converte o JSON da receita
+    texto = dados["candidates"][0]["content"]["parts"][0]["text"]
+    return json.loads(texto)
 
 
 # ---------------------------------------------------------------------------
@@ -156,9 +157,12 @@ def sugerir_receita(inventario, usuario):
         cache[chave] = receita
         persistencia.salvar_json(config.ARQ_RECEITAS_CACHE, cache)
         return receita, "ia"
-    except Exception:
+    except Exception as erro:
         # Qualquer falha (sem chave, sem internet, timeout, erro HTTP...)
-        # cai aqui. Plano B:
+        # cai aqui. O print abaixo mostra a causa no TERMINAL para ajudar
+        # a depurar. (Pode remover depois que tudo estiver funcionando.)
+        print(f"[DEBUG] Falha na IA: {repr(erro)}")
+        # Plano B:
         if chave in cache:
             return cache[chave], "cache"
         return receita_generica(ingredientes), "generica"

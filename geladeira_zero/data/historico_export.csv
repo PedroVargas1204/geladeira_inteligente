@@ -2,3 +2,12 @@ nome,quantidade,unidade,categoria,status,data
 tomate,3.0,unid,Legumes,consumido,2026-06-18
 tomate,1.0,unid,Legumes,consumido,2026-06-22
 frango,200.0,g,Proteínas,consumido,2026-06-22
+bovino,1.0,kg,Proteínas,descartado,2026-07-08
+frango,499.5,g,Proteínas,consumido,2026-07-08
+tomate,1.0,unid,Legumes,consumido,2026-07-09
+bovino,1.0,kg,Proteínas,consumido,2026-07-09
+bovino,1.0,kg,Proteínas,consumido,2026-07-09
+pao,3.0,unid,Padaria,consumido,2026-07-09
+tomate,1.0,kg,Legumes,consumido,2026-07-09
+leite,1.0,l,Laticínios,consumido,2026-07-09
+frango,0.5,g,Proteínas,consumido,2026-07-09
