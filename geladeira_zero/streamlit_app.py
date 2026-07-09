@@ -7,17 +7,22 @@ Reaproveita os MESMOS módulos de lógica do projeto (persistencia, inventario,
 alertas, ia, impacto) — não reimplementa nenhuma regra. Os dados são os mesmos
 arquivos JSON usados pelo main.py, então terminal e web ficam sincronizados.
 
-Novidades desta versão:
-- CONSUMO PARCIAL: dá para consumir/descartar só parte da quantidade.
-- Mais robusto: erros de leitura/cálculo aparecem como aviso amigável em vez
-  de derrubar a tela inteira.
+Novidades desta versão (redesign de UX):
+- Tema visual próprio (veja .streamlit/config.toml na mesma pasta).
+- Painel com saudação, cards e atalho direto para gerar receita.
+- Adicionar item mostra a validade prevista ANTES de confirmar, e avisa
+  quando o local escolhido não é recomendado para aquele alimento.
+- Inventário com busca e filtro por local de armazenamento.
+- Receita fica na tela (não some ao interagir) e tem layout em colunas.
+- Impacto com equivalências do dia a dia (km de carro, banhos de chuveiro).
+- Notificações (toasts) que sobrevivem ao recarregamento da página.
 
 Como rodar (dentro da pasta do projeto, onde estão os outros .py):
-    pip install streamlit
+    pip install streamlit pandas
     python -m streamlit run streamlit_app.py
 """
 
-from datetime import date
+from datetime import date, datetime
 
 import pandas as pd
 import streamlit as st
@@ -32,6 +37,29 @@ import impacto
 
 # Unidades aceitas pelo converter_para_kg() do impacto.py.
 UNIDADES_VALIDAS = ["kg", "g", "l", "ml", "unid"]
+
+EMOJI_LOCAL = {"geladeira": "🧊", "despensa": "🗄️", "freezer": "❄️"}
+
+# Rótulos amigáveis para as unidades (o valor salvo continua sendo a sigla).
+ROTULO_UNIDADE = {
+    "unid": "unidades",
+    "kg": "quilos (kg)",
+    "g": "gramas (g)",
+    "l": "litros (L)",
+    "ml": "mililitros (mL)",
+}
+
+
+def data_br(data_iso):
+    """
+    Converte 'AAAA-MM-DD' (formato dos arquivos JSON) para 'DD/MM/AAAA'
+    (exibição). Os arquivos continuam em ISO porque a ordenação por
+    validade depende disso — só a TELA muda para o padrão brasileiro.
+    """
+    try:
+        return datetime.strptime(data_iso, "%Y-%m-%d").strftime("%d/%m/%Y")
+    except (ValueError, TypeError):
+        return data_iso
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +91,15 @@ def impacto_seguro(historico, base):
         return 0.0, 0.0, 0.0, 0.0
 
 
+def avisar(mensagem, icone="✅"):
+    """
+    Agenda um toast para DEPOIS do st.rerun(). Toasts disparados logo antes
+    de recarregar a página se perdem; guardando em session_state, o aviso
+    aparece na próxima execução.
+    """
+    st.session_state["flash"] = (mensagem, icone)
+
+
 # Carregamos do disco a cada execução. Protegido para mostrar erro amigável.
 try:
     estado = carregar_estado()
@@ -76,6 +113,45 @@ except Exception as e:
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="Geladeira Zero", page_icon="🧊", layout="wide")
 
+# Cor da barra lateral independente da cor dos inputs.
+# (o tema do config.toml controla os dois juntos; este CSS separa a lateral)
+COR_SIDEBAR = "#484D41"
+COR_BORDA = "#7D8672"   # cor da borda normal
+
+st.markdown(
+    f"""
+    <style>
+    section[data-testid="stSidebar"] > div {{
+        background-color: {COR_SIDEBAR};
+    }}
+    /* texto da barra lateral em branco (fundo escuro pede texto claro) */
+    section[data-testid="stSidebar"] * {{
+        color: #FFFFFF !important;
+    }}
+    /* qualquer wrapper de campo do BaseWeb (texto, número, select, data) */
+    div[data-baseweb="input"],
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="base-input"],
+    [data-baseweb="input"] > div,
+    .stNumberInput div[data-baseweb],
+    .stDateInput div[data-baseweb],
+    .stTextInput div[data-baseweb] {{
+        border-color: {COR_BORDA} !important;
+    }}
+    div[data-baseweb="input"]:focus-within,
+    div[data-baseweb="select"] > div:hover {{
+        border-color: #557A46 !important;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Mostra o toast agendado na execução anterior (se houver).
+if "flash" in st.session_state:
+    mensagem, icone = st.session_state.pop("flash")
+    st.toast(mensagem, icon=icone)
+
 nome_usuario = estado["usuario"].get("nome") or "visitante"
 ativos = len(estado["inventario"])
 
@@ -88,121 +164,226 @@ vencendo = len(itens_vencendo)
 vencidos = len(itens_vencidos)
 _, _, _, reais_economizados = impacto_seguro(estado["historico"], estado["base"])
 
+PAGINAS = [
+    "📊 Painel",
+    "📦 Inventário",
+    "➕ Adicionar item",
+    "⚠️ Alertas",
+    "✅ Consumir / Descartar",
+    "🍳 Sugerir receita",
+    "🌱 Impacto",
+    "⚙️ Configurações",
+    "💾 Exportar CSV",
+]
+
+# Navegação programática: se algum botão pediu para trocar de página,
+# aplicamos ANTES de criar o widget de rádio (regra do Streamlit).
+if "ir_para" in st.session_state:
+    st.session_state["nav"] = st.session_state.pop("ir_para")
+
 with st.sidebar:
-    st.title("🧊 Geladeira Zero")
+    st.title("Geladeira Zero")
     st.caption(f"Olá, {nome_usuario}!")
-    st.metric("Itens ativos", ativos)
-    st.metric(f"Vencendo em {config.DIAS_ALERTA} dias", vencendo)
-    st.metric("Vencidos", vencidos)
-    st.metric("Economia acumulada", f"R$ {reais_economizados:.2f}")
+
+    col_a, col_b = st.columns(2)
+    col_a.metric("Itens ativos", ativos)
+    col_b.metric("Economia", f"R$ {reais_economizados:.0f}")
+    col_c, col_d = st.columns(2)
+    col_c.metric(f"Vencem em {config.DIAS_ALERTA}d", vencendo)
+    col_d.metric("Vencidos", vencidos)
+
     st.divider()
-    pagina = st.radio(
-        "Navegação",
-        [
-            "📊 Painel",
-            "📦 Inventário",
-            "➕ Adicionar item",
-            "⚠️ Alertas",
-            "✅ Consumir / Descartar",
-            "🍳 Sugerir receita",
-            "🌱 Impacto",
-            "⚙️ Configurações",
-            "💾 Exportar CSV",
-        ],
-    )
+    pagina = st.radio("Navegação", PAGINAS, key="nav", label_visibility="collapsed")
+    st.divider()
+    st.caption("♻️ Menos desperdício, mais sabor.")
 
 
 # ---------------------------------------------------------------------------
 # PÁGINA: PAINEL
 # ---------------------------------------------------------------------------
 if pagina == "📊 Painel":
-    st.header("Painel geral")
+    hora = datetime.now().hour
+    saudacao = "Bom dia" if hora < 12 else "Boa tarde" if hora < 18 else "Boa noite"
+    st.header(f"{saudacao}, {nome_usuario}!")
+
+    # Uma frase de resumo diz mais que quatro números soltos.
+    if vencidos:
+        st.caption(f"⚠️ Você tem {vencidos} item(ns) vencido(s) e "
+                   f"{vencendo} vencendo em breve. Bora resolver?")
+    elif vencendo:
+        st.caption(f"⏳ {vencendo} item(ns) vencendo nos próximos "
+                   f"{config.DIAS_ALERTA} dias — que tal uma receita?")
+    else:
+        st.caption("✨ Tudo sob controle na sua geladeira.")
+
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Itens no inventário", ativos)
-    col2.metric(f"Vencendo em {config.DIAS_ALERTA} dias", vencendo)
-    col3.metric("Vencidos", vencidos)
-    col4.metric("Economia (R$)", f"{reais_economizados:.2f}")
+    col1.metric("📦 No inventário", ativos)
+    col2.metric(f"⏳ Vencendo em {config.DIAS_ALERTA} dias", vencendo)
+    col3.metric("🔴 Vencidos", vencidos)
+    col4.metric("💰 Economia", f"R$ {reais_economizados:.2f}")
 
-    st.subheader("Já vencidos")
-    if not itens_vencidos:
-        st.success("Nenhum item vencido. 🎉")
-    else:
-        for item, dias in itens_vencidos:
-            st.error(f"**{item['nome']}** venceu há {abs(dias)} dia(s).")
+    st.divider()
+    col_esq, col_dir = st.columns(2, gap="large")
 
-    st.subheader("Próximos a vencer")
-    if not itens_vencendo:
-        st.success("Nenhum item vencendo nos próximos dias. 🎉")
-    else:
-        for item, dias in itens_vencendo:
-            if dias == 0:
-                st.warning(f"**{item['nome']}** vence HOJE.")
+    with col_esq:
+        st.subheader("⏳ Precisam de atenção")
+        if not itens_vencidos and not itens_vencendo:
+            st.success("Nenhum item vencido ou vencendo. 🎉")
+        else:
+            for item, dias in itens_vencidos:
+                st.error(f"**{item['nome']}** venceu há {abs(dias)} dia(s).")
+            for item, dias in itens_vencendo:
+                if dias == 0:
+                    st.warning(f"**{item['nome']}** vence **HOJE**.")
+                else:
+                    st.info(f"**{item['nome']}** vence em {dias} dia(s).")
+
+    with col_dir:
+        st.subheader("⚡ Ações rápidas")
+        with st.container(border=True):
+            if itens_vencendo or itens_vencidos:
+                st.write("Tem coisa vencendo — a IA monta uma receita "
+                         "para aproveitar tudo antes que estrague.")
             else:
-                st.info(f"**{item['nome']}** vence em {dias} dia(s).")
+                st.write("Gere uma receita com o que você tem em casa.")
+            if st.button("🍳 Gerar receita agora", type="primary",
+                         width="stretch"):
+                st.session_state["ir_para"] = "🍳 Sugerir receita"
+                st.session_state["gerar_ao_abrir"] = True
+                st.rerun()
+        with st.container(border=True):
+            st.write("Acabou de fazer compras?")
+            if st.button("➕ Adicionar itens", width="stretch"):
+                st.session_state["ir_para"] = "➕ Adicionar item"
+                st.rerun()
 
 
 # ---------------------------------------------------------------------------
 # PÁGINA: INVENTÁRIO
 # ---------------------------------------------------------------------------
 elif pagina == "📦 Inventário":
-    st.header("Inventário (ordenado por validade)")
+    st.header("📦 Inventário")
+    st.caption("Ordenado por validade: o que vence primeiro aparece no topo.")
     ordenado = inv.listar_ordenado(estado["inventario"])
+
     if not ordenado:
-        st.info("Inventário vazio. Adicione itens na aba ➕.")
+        st.info("Inventário vazio. Adicione itens na aba ➕ Adicionar item.")
     else:
+        # Busca + filtro deixam a tabela útil mesmo com muitos itens.
+        col_busca, col_filtro = st.columns([2, 1])
+        busca = col_busca.text_input("🔎 Buscar alimento",
+                                     placeholder="ex.: tomate")
+        filtro_local = col_filtro.selectbox(
+            "Local", ["todos"] + list(config.LOCAIS_VALIDOS))
+
         linhas = []
         for item in ordenado:
+            if busca and busca.strip().lower() not in item["nome"].lower():
+                continue
+            if filtro_local != "todos" and item["local"] != filtro_local:
+                continue
             dias = alertas.dias_para_vencer(item["data_validade"])
             if dias < 0:
                 situacao = f"🔴 Vencido há {abs(dias)}d"
             elif dias <= config.DIAS_ALERTA:
                 situacao = f"🟡 Vence em {dias}d"
             else:
-                situacao = f"🟢 {dias}d"
+                situacao = f"🟢 Vence em {dias}d"
+            local = item["local"]
             linhas.append({
                 "Alimento": item["nome"],
                 "Qtd": f"{item['quantidade']} {item['unidade']}",
-                "Local": item["local"],
-                "Validade": item["data_validade"],
+                "Local": f"{EMOJI_LOCAL.get(local, '')} {local}",
+                "Comprado em": data_br(item.get("data_compra", "—")),
+                "Validade": data_br(item["data_validade"]),
                 "Situação": situacao,
             })
-        st.dataframe(pd.DataFrame(linhas), use_container_width=True, hide_index=True)
+
+        if not linhas:
+            st.info("Nenhum item encontrado com esses filtros.")
+        else:
+            st.dataframe(pd.DataFrame(linhas), width="stretch",
+                         hide_index=True)
+            st.caption(f"{len(linhas)} item(ns) exibido(s).")
 
 
 # ---------------------------------------------------------------------------
 # PÁGINA: ADICIONAR ITEM
 # ---------------------------------------------------------------------------
 elif pagina == "➕ Adicionar item":
-    st.header("Adicionar item ao inventário")
+    st.header("➕ Adicionar item")
     if not estado["base"]:
         st.error("O catálogo de alimentos (base_alimentos.json) está vazio.")
     else:
         catalogo = sorted(estado["base"].keys())
-        with st.form("form_adicionar"):
-            nome = st.selectbox("Alimento (do catálogo)", catalogo)
-            col1, col2 = st.columns(2)
-            quantidade = col1.number_input("Quantidade", min_value=0.01,
-                                           value=1.0, step=0.1)
-            unidade = col2.selectbox("Unidade", UNIDADES_VALIDAS)
-            local = st.selectbox("Local de armazenamento", config.LOCAIS_VALIDOS)
-            data_compra = st.date_input("Data de compra", value=date.today())
-            enviar = st.form_submit_button("Adicionar")
 
-        if enviar:
-            data_iso = data_compra.strftime("%Y-%m-%d")
-            dados = estado["base"][nome]
-            validade = inv.sugerir_validade(data_iso, dados, local)
+        # Sem st.form de propósito: assim a prévia da validade atualiza
+        # em tempo real conforme o usuário troca alimento/local/data.
+        nome = st.selectbox("Alimento (do catálogo)", catalogo)
+        # A unidade vem PRIMEIRO, em botões horizontais — e o campo de
+        # quantidade se adapta a ela: unidades inteiras sobem de 1 em 1,
+        # gramas de 50 em 50, quilos de 0,25 em 0,25. Menos digitação.
+        unidade = st.radio(
+            "Como você mede esse item?",
+            ["unid", "kg", "g", "l", "ml"],
+            horizontal=True,
+            format_func=lambda u: ROTULO_UNIDADE.get(u, u),
+        )
+
+        col_qtd, col_local = st.columns(2)
+        if unidade == "unid":
+            quantidade = float(col_qtd.number_input(
+                "Quantidade", min_value=1, value=1, step=1))
+        elif unidade in ("g", "ml"):
+            quantidade = float(col_qtd.number_input(
+                f"Quantidade ({unidade})", min_value=10, value=500, step=50))
+        else:  # kg ou l
+            quantidade = float(col_qtd.number_input(
+                f"Quantidade ({unidade})", min_value=0.1, value=1.0,
+                step=0.25, format="%.2f"))
+
+        local = col_local.selectbox(
+            "Local de armazenamento",
+            config.LOCAIS_VALIDOS,
+            format_func=lambda l: f"{EMOJI_LOCAL.get(l, '')} {l}",
+        )
+        data_compra = st.date_input("Data de compra", value=date.today(),
+                                    format="DD/MM/YYYY")
+
+        # PRÉVIA: mostra quanto o alimento dura em cada local e a data
+        # de validade que será sugerida — antes de o usuário confirmar.
+        dados = estado["base"][nome]
+        duracoes = dados["validade_dias"]
+        st.caption("Durabilidade típica — " + " · ".join(
+            f"{EMOJI_LOCAL.get(l, '')} {l}: {duracoes.get(l, 0)}d"
+            for l in config.LOCAIS_VALIDOS
+        ))
+
+        data_iso = data_compra.strftime("%Y-%m-%d")
+        validade_prevista = inv.sugerir_validade(data_iso, dados, local)
+        if duracoes.get(local, 0) == 0:
+            st.warning(f"⚠️ **{local}** não é recomendado para "
+                       f"**{nome}** — a validade cairia em hoje mesmo. "
+                       "Considere outro local.")
+        else:
+            st.info(f"📅 Você vai adicionar **{quantidade:g} {unidade} de "
+                    f"{nome}** — validade prevista: "
+                    f"**{data_br(validade_prevista)}**")
+
+        if st.button("Adicionar ao inventário", type="primary",
+                     width="stretch"):
             item = {
                 "nome": nome,
                 "quantidade": quantidade,
                 "unidade": unidade,
                 "local": local,
                 "data_compra": data_iso,
-                "data_validade": validade,
+                "data_validade": validade_prevista,
             }
             inv.adicionar_item(estado["inventario"], item)
             salvar_estado(estado)
-            st.success(f"Adicionado! Validade sugerida: {validade}")
+            avisar(f"{nome} adicionado! Vence em "
+                   f"{data_br(validade_prevista)}.", "🧊")
             st.rerun()
 
 
@@ -210,35 +391,50 @@ elif pagina == "➕ Adicionar item":
 # PÁGINA: ALERTAS
 # ---------------------------------------------------------------------------
 elif pagina == "⚠️ Alertas":
-    st.header("Alertas de vencimento")
+    st.header("⚠️ Alertas de vencimento")
     lista = alertas.calcular_alertas(estado["inventario"])
     if not lista:
         st.success("Nenhum item vencendo nos próximos dias. 🙂")
     else:
+        st.caption(f"{len(lista)} item(ns) precisando de atenção, "
+                   "do mais urgente para o menos urgente.")
         for item, dias in lista:
             if dias < 0:
                 st.error(f"**{item['nome']}** — venceu há {abs(dias)} dia(s)")
             elif dias == 0:
-                st.warning(f"**{item['nome']}** — vence HOJE")
+                st.warning(f"**{item['nome']}** — vence **HOJE**")
             else:
                 st.info(f"**{item['nome']}** — vence em {dias} dia(s)")
+
+        st.divider()
+        if st.button("🍳 Aproveitar em uma receita", type="primary"):
+            st.session_state["ir_para"] = "🍳 Sugerir receita"
+            st.session_state["gerar_ao_abrir"] = True
+            st.rerun()
 
 
 # ---------------------------------------------------------------------------
 # PÁGINA: CONSUMIR / DESCARTAR  (com consumo parcial)
 # ---------------------------------------------------------------------------
 elif pagina == "✅ Consumir / Descartar":
-    st.header("Marcar item como consumido ou descartado")
-    ordenado = inv.listar_ordenado(estado["inventario"])
-    if not ordenado:
+    st.header("✅ Consumir ou descartar")
+    st.caption("Registrar o destino dos alimentos alimenta as métricas "
+               "de impacto — consumo conta como desperdício evitado.")
+
+    if not estado["inventario"]:
         st.info("Inventário vazio.")
     else:
-        # Mapeia o rótulo mostrado -> posição real na lista original.
-        rotulos = {
-            f"{item['nome']} — {item['quantidade']}{item['unidade']} "
-            f"(vence {item['data_validade']})": estado["inventario"].index(item)
-            for item in ordenado
-        }
+        # enumerate ANTES de ordenar preserva a posição real de cada item
+        # na lista original (dois itens iguais não se confundem).
+        pares = sorted(enumerate(estado["inventario"]),
+                       key=lambda par: par[1]["data_validade"])
+        rotulos = {}
+        for posicao, item in pares:
+            rotulo = (f"{item['nome']} — {item['quantidade']}"
+                      f"{item['unidade']} "
+                      f"(vence {data_br(item['data_validade'])})")
+            rotulos[rotulo] = posicao
+
         escolha = st.selectbox("Escolha o item", list(rotulos.keys()))
         indice = rotulos[escolha]
         item_sel = estado["inventario"][indice]
@@ -247,12 +443,14 @@ elif pagina == "✅ Consumir / Descartar":
 
         # Campo de quantidade: começa cheio (= consumir tudo). Reduza para
         # fazer consumo parcial — o resto continua no inventário.
+        # O passo acompanha a unidade (1 unid, 50 g/ml, 0,25 kg/l).
+        passo = {"unid": 1.0, "g": 50.0, "ml": 50.0}.get(unidade, 0.25)
         qtd = st.number_input(
             f"Quantidade a registrar ({unidade})",
             min_value=0.01,
             max_value=qtd_max,
             value=qtd_max,
-            step=0.1,
+            step=passo,
         )
         if qtd < qtd_max:
             st.caption(f"Consumo parcial: restarão "
@@ -261,17 +459,18 @@ elif pagina == "✅ Consumir / Descartar":
             st.caption("Quantidade total: o item sairá do inventário.")
 
         col1, col2 = st.columns(2)
-        if col1.button("✅ Consumido", use_container_width=True):
+        if col1.button("✅ Consumido", type="primary", width="stretch"):
             inv.marcar_consumido(estado["inventario"], estado["historico"],
                                  indice, estado["base"], qtd)
             salvar_estado(estado)
-            st.success(f"Registrado: {qtd}{unidade} consumido(s).")
+            avisar(f"{qtd}{unidade} de {item_sel['nome']} consumido(s). "
+                   "Desperdício evitado! 🌱", "✅")
             st.rerun()
-        if col2.button("🗑️ Descartado", use_container_width=True):
+        if col2.button("🗑️ Descartado", width="stretch"):
             inv.marcar_descartado(estado["inventario"], estado["historico"],
                                   indice, estado["base"], qtd)
             salvar_estado(estado)
-            st.warning(f"Registrado: {qtd}{unidade} descartado(s).")
+            avisar(f"{qtd}{unidade} de {item_sel['nome']} descartado(s).", "🗑️")
             st.rerun()
 
 
@@ -279,46 +478,126 @@ elif pagina == "✅ Consumir / Descartar":
 # PÁGINA: SUGERIR RECEITA
 # ---------------------------------------------------------------------------
 elif pagina == "🍳 Sugerir receita":
-    st.header("Receita com o que você tem")
+    st.header("🍳 Receita com o que você tem")
+
     if not estado["inventario"]:
         st.info("Adicione itens primeiro.")
     else:
-        if st.button("Gerar receita"):
-            with st.spinner("Buscando receita..."):
+        # Cada item do inventário vira uma opção com as informações que
+        # importam na decisão: quantidade, situação e validade. Os que
+        # estão perto de vencer (a sugestão automática) já vêm marcados.
+        sugeridos = set(ia.selecionar_ingredientes(estado["inventario"]))
+        opcoes = {}   # rótulo mostrado -> nome do alimento
+        padrao = []   # rótulos pré-selecionados
+        for item in inv.listar_ordenado(estado["inventario"]):
+            dias = alertas.dias_para_vencer(item["data_validade"])
+            if dias < 0:
+                status = f"🔴 vencido há {abs(dias)}d"
+            elif dias <= config.DIAS_ALERTA:
+                status = f"🟡 vence em {dias}d"
+            else:
+                status = f"🟢 vence em {dias}d"
+            rotulo = (f"{item['nome']} · {item['quantidade']}"
+                      f"{item['unidade']} · {status} "
+                      f"({data_br(item['data_validade'])})")
+            if rotulo not in opcoes:
+                opcoes[rotulo] = item["nome"]
+                if item["nome"] in sugeridos:
+                    padrao.append(rotulo)
+
+        st.caption("Monte a receita do seu jeito: os itens perto de vencer "
+                   "já vêm marcados, mas você pode tirar e pôr o que quiser.")
+        escolhidos = st.multiselect(
+            "Ingredientes do inventário",
+            list(opcoes.keys()),
+            default=padrao,
+            placeholder="Escolha um ou mais ingredientes...",
+        )
+        # set() elimina nomes repetidos (dois pacotes do mesmo alimento).
+        ingredientes = sorted({opcoes[r] for r in escolhidos})
+
+        if ingredientes:
+            st.caption("A receita vai usar: **" +
+                       ", ".join(ingredientes) + "**")
+
+        gerar = st.button("✨ Gerar receita", type="primary",
+                          disabled=not ingredientes)
+        if not ingredientes:
+            st.info("Selecione pelo menos um ingrediente para gerar.")
+
+        # O painel/alertas podem pedir para já gerar ao abrir a página
+        # (usa a pré-seleção automática).
+        if st.session_state.pop("gerar_ao_abrir", False) and ingredientes:
+            gerar = True
+
+        if gerar:
+            with st.spinner("Consultando o chef..."):
                 try:
-                    receita, origem = ia.sugerir_receita(estado["inventario"],
-                                                          estado["usuario"])
+                    receita, origem = ia.sugerir_receita(
+                        estado["inventario"], estado["usuario"],
+                        ingredientes=ingredientes)
+                    # Guardamos na sessão: a receita continua na tela
+                    # mesmo depois de outros cliques/reruns.
+                    st.session_state["ultima_receita"] = (receita, origem)
                 except Exception as e:
                     st.error(f"Falha ao gerar receita: {e}")
-                    receita, origem = None, None
-            if receita:
-                rotulo = {"ia": "IA", "cache": "cache local",
-                          "generica": "receita base"}
-                st.caption(f"Origem: {rotulo.get(origem, origem)}")
-                st.subheader(receita["titulo"])
-                st.markdown("**Ingredientes:**")
-                for ing in receita["ingredientes"]:
-                    st.markdown(f"- {ing}")
-                st.markdown("**Modo de preparo:**")
+
+        if "ultima_receita" in st.session_state:
+            receita, origem = st.session_state["ultima_receita"]
+            rotulo = {"ia": "🤖 gerada pela IA agora",
+                      "cache": "💾 do cache local (offline)",
+                      "generica": "📖 receita base (plano B)"}
+
+            st.divider()
+            st.subheader(receita["titulo"])
+            st.caption(f"Origem: {rotulo.get(origem, origem)}")
+
+            col_ing, col_prep = st.columns([1, 2], gap="large")
+            with col_ing:
+                st.markdown("##### 🧺 Ingredientes")
+                with st.container(border=True):
+                    for ing in receita["ingredientes"]:
+                        st.markdown(f"- {ing}")
+            with col_prep:
+                st.markdown("##### 👨‍🍳 Modo de preparo")
                 for i, passo in enumerate(receita["modo_preparo"], start=1):
-                    st.markdown(f"{i}. {passo}")
+                    st.markdown(f"**{i}.** {passo}")
+
+            st.divider()
+            st.caption("Não curtiu? Clique em ✨ Gerar receita de novo. "
+                       "Depois de cozinhar, registre os itens em "
+                       "✅ Consumir / Descartar para contar no seu impacto.")
 
 
 # ---------------------------------------------------------------------------
 # PÁGINA: IMPACTO
 # ---------------------------------------------------------------------------
 elif pagina == "🌱 Impacto":
-    st.header("Impacto e economia")
+    st.header("🌱 Impacto e economia")
+    st.caption("Tudo que você consumiu (em vez de jogar fora) vira "
+               "desperdício evitado — e a conta aparece aqui.")
+
     kg, co2, agua, reais = impacto_seguro(estado["historico"], estado["base"])
     taxa = impacto.taxa_aproveitamento(estado["historico"])
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Alimento salvo", f"{kg:.2f} kg")
-    col2.metric("CO₂ evitado", f"{co2:.2f} kg")
-    col3.metric("Água economizada", f"{agua:.0f} L")
-    col4, col5 = st.columns(2)
-    col4.metric("Dinheiro salvo", f"R$ {reais:.2f}")
-    col5.metric("Aproveitamento", f"{taxa*100:.0f}%")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("🥗 Alimento salvo", f"{kg:.2f} kg")
+    col2.metric("💨 CO₂ evitado", f"{co2:.2f} kg")
+    col3.metric("💧 Água economizada", f"{agua:.0f} L")
+    col4.metric("💰 Dinheiro salvo", f"R$ {reais:.2f}")
+
+    # Equivalências tornam os números abstratos palpáveis.
+    if co2 > 0 or agua > 0:
+        km_carro = co2 / 0.12       # ~0,12 kg CO₂ por km de carro popular
+        banhos = agua / 80          # ~80 L por banho de 8 minutos
+        st.caption(f"Isso equivale a ≈ **{km_carro:.0f} km** de carro não "
+                   f"rodados e ≈ **{banhos:.0f} banhos** de chuveiro. 🚿🚗")
+
+    st.divider()
+    st.subheader("Taxa de aproveitamento")
+    st.progress(min(taxa, 1.0),
+                text=f"{taxa*100:.0f}% do que saiu do inventário foi "
+                     "consumido (e não descartado)")
 
     st.subheader("Itens consumidos por categoria")
     contagem = impacto.agregar_por_categoria(estado["historico"])
@@ -328,27 +607,31 @@ elif pagina == "🌱 Impacto":
         df = pd.DataFrame(
             {"Categoria": list(contagem.keys()), "Itens": list(contagem.values())}
         ).set_index("Categoria")
-        st.bar_chart(df)
+        st.bar_chart(df, color="#4ECDC4")
 
 
 # ---------------------------------------------------------------------------
 # PÁGINA: CONFIGURAÇÕES
 # ---------------------------------------------------------------------------
 elif pagina == "⚙️ Configurações":
-    st.header("Preferências do usuário")
+    st.header("⚙️ Preferências")
+    st.caption("A IA usa essas preferências ao criar receitas: restrições "
+               "alimentares, alergias e tempo máximo de preparo.")
     u = estado["usuario"]
     with st.form("form_config"):
         nome = st.text_input("Seu nome", value=u.get("nome", ""))
         col1, col2 = st.columns(2)
-        vegetariano = col1.checkbox("Vegetariano", value=u.get("vegetariano", False))
-        vegano = col2.checkbox("Vegano", value=u.get("vegano", False))
+        vegetariano = col1.checkbox("🥦 Vegetariano",
+                                    value=u.get("vegetariano", False))
+        vegano = col2.checkbox("🌱 Vegano", value=u.get("vegano", False))
         alergias_txt = st.text_input(
             "Alergias (separadas por vírgula)",
             value=", ".join(u.get("alergias", [])),
+            placeholder="ex.: amendoim, camarão, lactose",
         )
-        tempo = st.slider("Tempo máx. de receita (min)", 5, 240,
+        tempo = st.slider("⏱️ Tempo máx. de receita (min)", 5, 240,
                           value=u.get("tempo_max_receita", 60))
-        salvar = st.form_submit_button("Salvar preferências")
+        salvar = st.form_submit_button("Salvar preferências", type="primary")
 
     if salvar:
         u["nome"] = nome
@@ -357,7 +640,7 @@ elif pagina == "⚙️ Configurações":
         u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
         u["tempo_max_receita"] = tempo
         salvar_estado(estado)
-        st.success("Preferências salvas.")
+        avisar("Preferências salvas!", "⚙️")
         st.rerun()
 
 
@@ -365,7 +648,7 @@ elif pagina == "⚙️ Configurações":
 # PÁGINA: EXPORTAR CSV
 # ---------------------------------------------------------------------------
 elif pagina == "💾 Exportar CSV":
-    st.header("Exportar histórico")
+    st.header("💾 Exportar histórico")
     if not estado["historico"]:
         st.info("Histórico vazio. Nada para exportar ainda.")
     else:
@@ -374,10 +657,13 @@ elif pagina == "💾 Exportar CSV":
         with open(caminho, "r", encoding="utf-8") as arquivo:
             conteudo = arquivo.read()
         st.download_button(
-            "Baixar historico_export.csv",
+            "⬇️ Baixar historico_export.csv",
             data=conteudo,
             file_name="historico_export.csv",
             mime="text/csv",
+            type="primary",
         )
-        st.dataframe(pd.DataFrame(estado["historico"]),
-                     use_container_width=True, hide_index=True)
+        df_hist = pd.DataFrame(estado["historico"])
+        if "data" in df_hist.columns:
+            df_hist["data"] = df_hist["data"].map(data_br)
+        st.dataframe(df_hist, width="stretch", hide_index=True)

@@ -1,42 +1,26 @@
 [
   {
-    "nome": "ovo",
+    "nome": "camarão",
+    "quantidade": 500.0,
+    "unidade": "g",
+    "local": "freezer",
+    "data_compra": "2026-06-29",
+    "data_validade": "2026-12-26"
+  },
+  {
+    "nome": "cebola",
     "quantidade": 3.0,
-    "unidade": "unide",
-    "local": "despensa",
-    "data_compra": "2026-05-09",
-    "data_validade": "2026-05-23"
+    "unidade": "unid",
+    "local": "geladeira",
+    "data_compra": "2026-06-30",
+    "data_validade": "2026-08-29"
   },
   {
-    "nome": "abacate",
+    "nome": "macarrão",
     "quantidade": 1.0,
     "unidade": "kg",
     "local": "geladeira",
-    "data_compra": "2026-07-09",
-    "data_validade": "2026-07-16"
-  },
-  {
-    "nome": "bovino",
-    "quantidade": 1.0,
-    "unidade": "kg",
-    "local": "geladeira",
-    "data_compra": "2026-07-01",
-    "data_validade": "2026-07-03"
-  },
-  {
-    "nome": "limao",
-    "quantidade": 1.0,
-    "unidade": "kg",
-    "local": "despensa",
-    "data_compra": "2026-07-02",
-    "data_validade": "2026-07-09"
-  },
-  {
-    "nome": "tomate",
-    "quantidade": 1.0,
-    "unidade": "kg",
-    "local": "geladeira",
-    "data_compra": "2026-07-02",
-    "data_validade": "2026-07-09"
+    "data_compra": "2026-06-30",
+    "data_validade": "2027-06-30"
   }
 ]

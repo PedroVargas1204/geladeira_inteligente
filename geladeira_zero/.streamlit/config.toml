@@ -1,0 +1,14 @@
+# Tema visual do Geladeira Zero
+# Salve este arquivo em: geladeira_zero/.streamlit/config.toml
+# (a pasta .streamlit fica DENTRO de geladeira_zero, ao lado dos .py)
+
+[theme]
+base = "light"
+primaryColor = "#667c5d"             # Verde-musgo saturado
+backgroundColor = "#FDFBF7"          # Tom "off-white"/creme suave
+secondaryBackgroundColor = "#FFFFFF" # Branco puro para contraste na lateral e inputs
+textColor = "#1E3A2B"                # Verde extremamente escuro para o texto
+font = "sans serif"
+
+[server]
+runOnSave = true                    # recarrega sozinho quando você salva um .py

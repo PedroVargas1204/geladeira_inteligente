@@ -23,12 +23,6 @@ try:
 except ImportError:
     TEM_REQUESTS = False
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()  # carrega o .env para as variáveis de ambiente
-except ImportError:
-    pass  # sem a biblioteca, segue valendo só o que vier do terminal
-
 
 # ---------------------------------------------------------------------------
 # 1) ESCOLHER OS INGREDIENTES
@@ -98,9 +92,8 @@ def consultar_ia(prompt):
     corpo = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "maxOutputTokens": 4000,                  # antes era 800
-            "responseMimeType": "application/json",
-            "thinkingConfig": {"thinkingBudget": 0},  # desliga o "pensamento"
+            "maxOutputTokens": 800,
+            "responseMimeType": "application/json",  # resposta em JSON puro
         },
     }
 
@@ -146,12 +139,17 @@ def receita_generica(ingredientes):
 # ---------------------------------------------------------------------------
 # FUNÇÃO PRINCIPAL DO MÓDULO — orquestra tudo com fallback
 # ---------------------------------------------------------------------------
-def sugerir_receita(inventario, usuario):
+def sugerir_receita(inventario, usuario, ingredientes=None):
     """
     Devolve (receita, origem). origem indica de onde veio: "ia", "cache"
     ou "generica". O programa NUNCA trava: try/except garante o plano B.
+
+    `ingredientes` é opcional: se vier uma lista (ex.: escolhida pelo
+    usuário na interface), ela é usada como está; se vier None, mantém o
+    comportamento automático de priorizar o que está perto de vencer.
     """
-    ingredientes = selecionar_ingredientes(inventario)
+    if ingredientes is None:
+        ingredientes = selecionar_ingredientes(inventario)
     cache = persistencia.carregar_json(config.ARQ_RECEITAS_CACHE, {})
     chave = chave_cache(ingredientes)
 

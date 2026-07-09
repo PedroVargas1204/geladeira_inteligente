@@ -51,5 +51,26 @@
       "Prepare a salada de tomate: Lave e pique os tomates em cubos pequenos. Em uma tigela, misture os tomates com o suco de meio limão, um fio de azeite, sal e pimenta-do-reino a gosto. Adicione as raspas de limão e a salsinha picada (se usar).",
       "Montagem: Sirva o picadinho de carne quente. Disponha os ovos cozidos cortados ao lado ou por cima. Acompanhe com a salada fresca de tomate e limão. Finalize com um fio de azeite extra sobre tudo."
     ]
+  },
+  "camarão+cebola+macarrão": {
+    "titulo": "Macarrão com Camarão e Cebola Caramelizada",
+    "ingredientes": [
+      "250g de camarão limpo",
+      "2 cebolas grandes",
+      "200g de macarrão (espaguete, linguine ou talharim)",
+      "2 dentes de alho picados",
+      "Azeite de oliva extra virgem a gosto",
+      "Sal a gosto",
+      "Pimenta-do-reino moída na hora a gosto",
+      "Salsinha fresca picada a gosto (opcional)",
+      "Pimenta calabresa (opcional, para um toque picante)"
+    ],
+    "modo_preparo": [
+      "Comece fatiando as cebolas em meias-luas finas. Em uma frigideira grande, adicione um bom fio de azeite e leve ao fogo médio-baixo. Adicione as cebolas fatiadas e uma pitada de sal. Cozinhe mexendo ocasionalmente por cerca de 20-30 minutos, até que fiquem bem macias e caramelizadas, com uma cor dourada intensa. Se necessário, adicione um pouquinho de água para evitar que grudem no fundo.",
+      "Enquanto a cebola carameliza, cozinhe o macarrão em água fervente com sal de acordo com as instruções da embalagem até ficar al dente. Reserve uma xícara da água do cozimento antes de escorrer o macarrão.",
+      "Quando as cebolas estiverem quase prontas, tempere o camarão com sal e pimenta-do-reino. Em outra frigideira (ou na mesma, se a cebola já estiver caramelizada e reservada), adicione um pouco de azeite e doure o alho picado por 30 segundos. Adicione o camarão e cozinhe por 2-3 minutos de cada lado, até que fiquem rosados e cozidos. Não cozinhe demais para não ficarem borrachudos. Se for usar pimenta calabresa, adicione junto com o alho.",
+      "Junte o macarrão escorrido à frigideira do camarão. Adicione a cebola caramelizada. Misture bem. Se estiver muito seco, adicione um pouco da água do cozimento do macarrão reservada para criar um molho leve e ajudar a envolver todos os ingredientes.",
+      "Finalize com salsinha fresca picada (se estiver usando) e um fio de azeite extra. Sirva imediatamente."
+    ]
   }
 }

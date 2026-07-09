@@ -94,5 +94,45 @@
     "categoria": "Proteínas",
     "status": "consumido",
     "data": "2026-07-09"
+  },
+  {
+    "nome": "ovo",
+    "quantidade": 3.0,
+    "unidade": "unide",
+    "categoria": "Proteínas",
+    "status": "descartado",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "bovino",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Proteínas",
+    "status": "descartado",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "limao",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Frutas",
+    "status": "descartado",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "tomate",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Legumes",
+    "status": "descartado",
+    "data": "2026-07-09"
+  },
+  {
+    "nome": "abacate",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "categoria": "Frutas",
+    "status": "descartado",
+    "data": "2026-07-09"
   }
 ]

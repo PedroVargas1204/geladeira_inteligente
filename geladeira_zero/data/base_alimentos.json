@@ -7,78 +7,6 @@
     "co2_kg": 1.4,
     "agua_litros_kg": 214
   },
-  "alface": {
-    "categoria": "Verduras",
-    "sinonimos": ["alface americana", "alface crespa", "alfaces"],
-    "validade_dias": { "geladeira": 5, "despensa": 1, "freezer": null },
-    "preco_kg": 8.0,
-    "co2_kg": 0.5,
-    "agua_litros_kg": 237
-  },
-  "banana": {
-    "categoria": "Frutas",
-    "sinonimos": ["banana prata", "banana nanica", "bananas"],
-    "validade_dias": { "geladeira": 7, "despensa": 4, "freezer": 90 },
-    "preco_kg": 5.0,
-    "co2_kg": 0.9,
-    "agua_litros_kg": 790
-  },
-  "maca": {
-    "categoria": "Frutas",
-    "sinonimos": ["maçã", "maca verde", "maca gala", "macas", "maçãs"],
-    "validade_dias": { "geladeira": 21, "despensa": 7, "freezer": 120 },
-    "preco_kg": 9.0,
-    "co2_kg": 0.4,
-    "agua_litros_kg": 822
-  },
-  "leite": {
-    "categoria": "Laticínios",
-    "sinonimos": ["leite integral", "leite desnatado", "leite uht"],
-    "validade_dias": { "geladeira": 5, "despensa": 90, "freezer": 30 },
-    "preco_kg": 5.5,
-    "co2_kg": 3.2,
-    "agua_litros_kg": 1020
-  },
-  "ovo": {
-    "categoria": "Proteínas",
-    "sinonimos": ["ovos", "ovo de galinha"],
-    "validade_dias": { "geladeira": 28, "despensa": 14, "freezer": null },
-    "preco_kg": 13.0,
-    "co2_kg": 4.5,
-    "agua_litros_kg": 3265
-  },
-  "frango": {
-    "categoria": "Proteínas",
-    "sinonimos": ["peito de frango", "file de frango", "coxa de frango"],
-    "validade_dias": { "geladeira": 2, "despensa": null, "freezer": 180 },
-    "preco_kg": 18.0,
-    "co2_kg": 6.9,
-    "agua_litros_kg": 4325
-  },
-  "bovino": {
-    "categoria": "Proteínas",
-    "sinonimos": ["patinho", "picanha", "cupim", "fraldinha", "carne bovina", "carne moída"],
-    "validade_dias": { "geladeira": 2, "despensa": null, "freezer": 180 },
-    "preco_kg": 40.0,
-    "co2_kg": 27.0,
-    "agua_litros_kg": 15400
-  },
-  "arroz": {
-    "categoria": "Grãos",
-    "sinonimos": ["arroz branco", "arroz integral"],
-    "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
-    "preco_kg": 6.0,
-    "co2_kg": 2.7,
-    "agua_litros_kg": 2497
-  },
-  "pao": {
-    "categoria": "Padaria",
-    "sinonimos": ["pão", "pão de forma", "pao frances", "pão francês"],
-    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 30 },
-    "preco_kg": 14.0,
-    "co2_kg": 1.3,
-    "agua_litros_kg": 1608
-  },
   "cenoura": {
     "categoria": "Legumes",
     "sinonimos": ["cenouras", "cenoura baby"],
@@ -87,50 +15,10 @@
     "co2_kg": 0.4,
     "agua_litros_kg": 195
   },
-  "tilapia": {
-    "categoria": "Proteínas",
-    "sinonimos": ["tilápia", "filé de tilápia", "peixe", "tilápias"],
-    "validade_dias": { "geladeira": 2, "despensa": null, "freezer": 120 },
-    "preco_kg": 35.0,
-    "co2_kg": 5.1,
-    "agua_litros_kg": 3000
-  },
-  "carne_suina": {
-    "categoria": "Proteínas",
-    "sinonimos": ["carne suína", "porco", "lombo", "pernil", "carne de porco"],
-    "validade_dias": { "geladeira": 3, "despensa": null, "freezer": 180 },
-    "preco_kg": 22.0,
-    "co2_kg": 12.1,
-    "agua_litros_kg": 5990
-  },
-  "atum_lata": {
-    "categoria": "Proteínas",
-    "sinonimos": ["atum em lata", "atum enlatado", "lata de atum"],
-    "validade_dias": { "geladeira": 3, "despensa": 1095, "freezer": null },
-    "preco_kg": 55.0,
-    "co2_kg": 6.1,
-    "agua_litros_kg": 500
-  },
-  "sardinha": {
-    "categoria": "Proteínas",
-    "sinonimos": ["sardinhas", "sardinha fresca", "sardinha em lata"],
-    "validade_dias": { "geladeira": 2, "despensa": null, "freezer": 90 },
-    "preco_kg": 18.0,
-    "co2_kg": 3.5,
-    "agua_litros_kg": 500
-  },
-  "linguica": {
-    "categoria": "Proteínas",
-    "sinonimos": ["linguiça", "linguiças", "linguiça toscana", "linguiça calabresa"],
-    "validade_dias": { "geladeira": 5, "despensa": null, "freezer": 90 },
-    "preco_kg": 25.0,
-    "co2_kg": 10.0,
-    "agua_litros_kg": 5000
-  },
   "batata": {
     "categoria": "Legumes",
     "sinonimos": ["batatas", "batata inglesa", "batata asterix"],
-    "validade_dias": { "geladeira": 30, "despensa": 14, "freezer": 300 },
+    "validade_dias": { "geladeira": 30, "despensa": 21, "freezer": 0 },
     "preco_kg": 5.0,
     "co2_kg": 0.5,
     "agua_litros_kg": 287
@@ -143,13 +31,13 @@
     "co2_kg": 0.5,
     "agua_litros_kg": 272
   },
-  "brocolis": {
-    "categoria": "Verduras",
-    "sinonimos": ["brócolis", "brócoli", "brocoli ninja"],
-    "validade_dias": { "geladeira": 7, "despensa": 2, "freezer": 300 },
-    "preco_kg": 15.0,
+  "alho": {
+    "categoria": "Legumes",
+    "sinonimos": ["alhos", "cabeça de alho", "dente de alho", "alho descascado"],
+    "validade_dias": { "geladeira": 90, "despensa": 60, "freezer": 180 },
+    "preco_kg": 30.0,
     "co2_kg": 0.6,
-    "agua_litros_kg": 285
+    "agua_litros_kg": 590
   },
   "abobrinha": {
     "categoria": "Legumes",
@@ -159,6 +47,70 @@
     "co2_kg": 0.5,
     "agua_litros_kg": 336
   },
+  "abóbora": {
+    "categoria": "Legumes",
+    "sinonimos": ["abobora", "abóbora cabotiá", "abóbora moranga", "jerimum"],
+    "validade_dias": { "geladeira": 30, "despensa": 30, "freezer": 240 },
+    "preco_kg": 5.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 336
+  },
+  "pimentão": {
+    "categoria": "Legumes",
+    "sinonimos": ["pimentao", "pimentão verde", "pimentão vermelho", "pimentão amarelo", "pimentões"],
+    "validade_dias": { "geladeira": 10, "despensa": 4, "freezer": 120 },
+    "preco_kg": 9.0,
+    "co2_kg": 0.7,
+    "agua_litros_kg": 379
+  },
+  "pepino": {
+    "categoria": "Legumes",
+    "sinonimos": ["pepinos", "pepino japonês"],
+    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 0 },
+    "preco_kg": 6.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 353
+  },
+  "beterraba": {
+    "categoria": "Legumes",
+    "sinonimos": ["beterrabas"],
+    "validade_dias": { "geladeira": 21, "despensa": 7, "freezer": 180 },
+    "preco_kg": 6.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 132
+  },
+  "chuchu": {
+    "categoria": "Legumes",
+    "sinonimos": ["chuchus"],
+    "validade_dias": { "geladeira": 14, "despensa": 5, "freezer": 90 },
+    "preco_kg": 4.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 300
+  },
+  "mandioca": {
+    "categoria": "Legumes",
+    "sinonimos": ["aipim", "macaxeira", "mandioca descascada"],
+    "validade_dias": { "geladeira": 5, "despensa": 2, "freezer": 180 },
+    "preco_kg": 6.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 560
+  },
+  "milho verde": {
+    "categoria": "Legumes",
+    "sinonimos": ["milho", "espiga de milho", "milho em lata"],
+    "validade_dias": { "geladeira": 5, "despensa": 2, "freezer": 240 },
+    "preco_kg": 8.0,
+    "co2_kg": 1.0,
+    "agua_litros_kg": 1220
+  },
+  "alface": {
+    "categoria": "Verduras",
+    "sinonimos": ["alface americana", "alface crespa", "alfaces"],
+    "validade_dias": { "geladeira": 5, "despensa": 1, "freezer": 0 },
+    "preco_kg": 8.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 237
+  },
   "couve": {
     "categoria": "Verduras",
     "sinonimos": ["couve manteiga", "couves", "couve picada"],
@@ -166,6 +118,70 @@
     "preco_kg": 10.0,
     "co2_kg": 0.5,
     "agua_litros_kg": 240
+  },
+  "couve-flor": {
+    "categoria": "Verduras",
+    "sinonimos": ["couve flor", "couveflor"],
+    "validade_dias": { "geladeira": 10, "despensa": 2, "freezer": 240 },
+    "preco_kg": 9.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 285
+  },
+  "brócolis": {
+    "categoria": "Verduras",
+    "sinonimos": ["brocolis", "brócoli", "brocoli ninja"],
+    "validade_dias": { "geladeira": 7, "despensa": 2, "freezer": 300 },
+    "preco_kg": 15.0,
+    "co2_kg": 0.6,
+    "agua_litros_kg": 285
+  },
+  "espinafre": {
+    "categoria": "Verduras",
+    "sinonimos": ["espinafres", "espinafre picado"],
+    "validade_dias": { "geladeira": 5, "despensa": 1, "freezer": 180 },
+    "preco_kg": 12.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 292
+  },
+  "rúcula": {
+    "categoria": "Verduras",
+    "sinonimos": ["rucula", "rúculas"],
+    "validade_dias": { "geladeira": 4, "despensa": 1, "freezer": 0 },
+    "preco_kg": 15.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 300
+  },
+  "repolho": {
+    "categoria": "Verduras",
+    "sinonimos": ["repolhos", "repolho roxo", "repolho verde"],
+    "validade_dias": { "geladeira": 21, "despensa": 5, "freezer": 90 },
+    "preco_kg": 4.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 280
+  },
+  "cheiro-verde": {
+    "categoria": "Verduras",
+    "sinonimos": ["cheiro verde", "salsinha", "cebolinha", "coentro", "salsa"],
+    "validade_dias": { "geladeira": 5, "despensa": 1, "freezer": 90 },
+    "preco_kg": 20.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 300
+  },
+  "banana": {
+    "categoria": "Frutas",
+    "sinonimos": ["banana prata", "banana nanica", "bananas"],
+    "validade_dias": { "geladeira": 7, "despensa": 4, "freezer": 90 },
+    "preco_kg": 5.0,
+    "co2_kg": 0.9,
+    "agua_litros_kg": 790
+  },
+  "maçã": {
+    "categoria": "Frutas",
+    "sinonimos": ["maca", "macas", "maçãs", "maca verde", "maca gala", "maçã verde", "maçã gala"],
+    "validade_dias": { "geladeira": 21, "despensa": 7, "freezer": 120 },
+    "preco_kg": 9.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 822
   },
   "laranja": {
     "categoria": "Frutas",
@@ -175,21 +191,21 @@
     "co2_kg": 0.4,
     "agua_litros_kg": 560
   },
-  "mamao": {
+  "limão": {
     "categoria": "Frutas",
-    "sinonimos": ["mamão", "mamão papaya", "mamão formosa"],
-    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 60 },
-    "preco_kg": 6.0,
-    "co2_kg": 0.5,
-    "agua_litros_kg": 460
-  },
-  "limao": {
-    "categoria": "Frutas",
-    "sinonimos": ["limão", "limões", "limão taiti", "limão siciliano"],
+    "sinonimos": ["limao", "limões", "limoes", "limão taiti", "limão siciliano"],
     "validade_dias": { "geladeira": 21, "despensa": 7, "freezer": 120 },
     "preco_kg": 5.0,
     "co2_kg": 0.4,
     "agua_litros_kg": 642
+  },
+  "mamão": {
+    "categoria": "Frutas",
+    "sinonimos": ["mamao", "mamão papaya", "mamão formosa", "papaia"],
+    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 60 },
+    "preco_kg": 6.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 460
   },
   "abacate": {
     "categoria": "Frutas",
@@ -199,26 +215,130 @@
     "co2_kg": 0.8,
     "agua_litros_kg": 1980
   },
-  "queijo_mussarela": {
+  "uva": {
+    "categoria": "Frutas",
+    "sinonimos": ["uvas", "uva verde", "uva rubi", "uva sem semente"],
+    "validade_dias": { "geladeira": 14, "despensa": 3, "freezer": 90 },
+    "preco_kg": 12.0,
+    "co2_kg": 0.6,
+    "agua_litros_kg": 608
+  },
+  "morango": {
+    "categoria": "Frutas",
+    "sinonimos": ["morangos", "caixa de morango"],
+    "validade_dias": { "geladeira": 5, "despensa": 1, "freezer": 120 },
+    "preco_kg": 20.0,
+    "co2_kg": 1.1,
+    "agua_litros_kg": 347
+  },
+  "manga": {
+    "categoria": "Frutas",
+    "sinonimos": ["mangas", "manga palmer", "manga tommy"],
+    "validade_dias": { "geladeira": 7, "despensa": 4, "freezer": 120 },
+    "preco_kg": 7.0,
+    "co2_kg": 0.6,
+    "agua_litros_kg": 1800
+  },
+  "abacaxi": {
+    "categoria": "Frutas",
+    "sinonimos": ["abacaxis", "abacaxi pérola", "ananás"],
+    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 120 },
+    "preco_kg": 5.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 255
+  },
+  "melancia": {
+    "categoria": "Frutas",
+    "sinonimos": ["melancias", "melancia sem semente"],
+    "validade_dias": { "geladeira": 7, "despensa": 7, "freezer": 90 },
+    "preco_kg": 3.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 235
+  },
+  "melão": {
+    "categoria": "Frutas",
+    "sinonimos": ["melao", "melões", "melão amarelo"],
+    "validade_dias": { "geladeira": 7, "despensa": 5, "freezer": 90 },
+    "preco_kg": 5.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 235
+  },
+  "pera": {
+    "categoria": "Frutas",
+    "sinonimos": ["peras", "pera williams", "pera portuguesa"],
+    "validade_dias": { "geladeira": 14, "despensa": 5, "freezer": 120 },
+    "preco_kg": 10.0,
+    "co2_kg": 0.4,
+    "agua_litros_kg": 922
+  },
+  "maracujá": {
+    "categoria": "Frutas",
+    "sinonimos": ["maracuja", "maracujás", "maracujá azedo"],
+    "validade_dias": { "geladeira": 14, "despensa": 7, "freezer": 180 },
+    "preco_kg": 12.0,
+    "co2_kg": 0.6,
+    "agua_litros_kg": 500
+  },
+  "goiaba": {
+    "categoria": "Frutas",
+    "sinonimos": ["goiabas", "goiaba vermelha", "goiaba branca"],
+    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 120 },
+    "preco_kg": 8.0,
+    "co2_kg": 0.5,
+    "agua_litros_kg": 460
+  },
+  "kiwi": {
+    "categoria": "Frutas",
+    "sinonimos": ["kiwis", "quiuí"],
+    "validade_dias": { "geladeira": 21, "despensa": 7, "freezer": 120 },
+    "preco_kg": 15.0,
+    "co2_kg": 0.6,
+    "agua_litros_kg": 500
+  },
+  "leite": {
     "categoria": "Laticínios",
-    "sinonimos": ["mussarela", "muçarela", "queijo mozarela", "queijo"],
-    "validade_dias": { "geladeira": 15, "despensa": null, "freezer": 90 },
+    "sinonimos": ["leite integral", "leite desnatado", "leite uht", "caixa de leite"],
+    "validade_dias": { "geladeira": 5, "despensa": 90, "freezer": 90 },
+    "preco_kg": 5.5,
+    "co2_kg": 3.2,
+    "agua_litros_kg": 1020
+  },
+  "queijo mussarela": {
+    "categoria": "Laticínios",
+    "sinonimos": ["queijo_mussarela", "mussarela", "muçarela", "queijo mozarela", "queijo"],
+    "validade_dias": { "geladeira": 15, "despensa": 0, "freezer": 90 },
     "preco_kg": 45.0,
     "co2_kg": 9.8,
     "agua_litros_kg": 5060
   },
-  "queijo_minas": {
+  "queijo minas": {
     "categoria": "Laticínios",
-    "sinonimos": ["queijo minas frescal", "queijo branco", "minas"],
-    "validade_dias": { "geladeira": 10, "despensa": null, "freezer": 60 },
+    "sinonimos": ["queijo_minas", "queijo minas frescal", "queijo branco", "minas"],
+    "validade_dias": { "geladeira": 10, "despensa": 0, "freezer": 60 },
     "preco_kg": 40.0,
     "co2_kg": 8.5,
     "agua_litros_kg": 4500
   },
-  "iogurte_natural": {
+  "queijo prato": {
     "categoria": "Laticínios",
-    "sinonimos": ["iogurte", "iogurtes", "iogurte integral"],
-    "validade_dias": { "geladeira": 14, "despensa": null, "freezer": 60 },
+    "sinonimos": ["prato fatiado", "queijo lanche"],
+    "validade_dias": { "geladeira": 15, "despensa": 0, "freezer": 90 },
+    "preco_kg": 48.0,
+    "co2_kg": 9.8,
+    "agua_litros_kg": 5000
+  },
+  "queijo parmesão": {
+    "categoria": "Laticínios",
+    "sinonimos": ["parmesao", "parmesão ralado", "queijo ralado"],
+    "validade_dias": { "geladeira": 60, "despensa": 0, "freezer": 180 },
+    "preco_kg": 80.0,
+    "co2_kg": 13.0,
+    "agua_litros_kg": 5600
+  },
+  "iogurte natural": {
+    "categoria": "Laticínios",
+    "sinonimos": ["iogurte_natural", "iogurte", "iogurtes", "iogurte integral", "iogurte grego"],
+    "validade_dias": { "geladeira": 14, "despensa": 0, "freezer": 60 },
     "preco_kg": 12.0,
     "co2_kg": 2.2,
     "agua_litros_kg": 1150
@@ -226,22 +346,190 @@
   "manteiga": {
     "categoria": "Laticínios",
     "sinonimos": ["manteigas", "manteiga com sal", "manteiga sem sal"],
-    "validade_dias": { "geladeira": 60, "despensa": null, "freezer": 180 },
+    "validade_dias": { "geladeira": 60, "despensa": 7, "freezer": 180 },
     "preco_kg": 55.0,
     "co2_kg": 11.5,
     "agua_litros_kg": 5550
   },
-  "feijao": {
+  "requeijão": {
+    "categoria": "Laticínios",
+    "sinonimos": ["requeijao", "requeijão cremoso", "copo de requeijão"],
+    "validade_dias": { "geladeira": 45, "despensa": 0, "freezer": 0 },
+    "preco_kg": 35.0,
+    "co2_kg": 8.0,
+    "agua_litros_kg": 4500
+  },
+  "creme de leite": {
+    "categoria": "Laticínios",
+    "sinonimos": ["creme de leite uht", "caixinha de creme de leite", "nata"],
+    "validade_dias": { "geladeira": 5, "despensa": 120, "freezer": 60 },
+    "preco_kg": 18.0,
+    "co2_kg": 5.0,
+    "agua_litros_kg": 2000
+  },
+  "leite condensado": {
+    "categoria": "Laticínios",
+    "sinonimos": ["lata de leite condensado", "caixinha de leite condensado"],
+    "validade_dias": { "geladeira": 7, "despensa": 240, "freezer": 90 },
+    "preco_kg": 20.0,
+    "co2_kg": 6.0,
+    "agua_litros_kg": 2500
+  },
+  "ovo": {
+    "categoria": "Proteínas",
+    "sinonimos": ["ovos", "ovo de galinha", "dúzia de ovos", "cartela de ovos"],
+    "validade_dias": { "geladeira": 28, "despensa": 14, "freezer": 0 },
+    "preco_kg": 13.0,
+    "co2_kg": 4.5,
+    "agua_litros_kg": 3265
+  },
+  "frango": {
+    "categoria": "Proteínas",
+    "sinonimos": ["peito de frango", "file de frango", "filé de frango", "coxa de frango", "frango inteiro"],
+    "validade_dias": { "geladeira": 2, "despensa": 0, "freezer": 180 },
+    "preco_kg": 18.0,
+    "co2_kg": 6.9,
+    "agua_litros_kg": 4325
+  },
+  "carne bovina": {
+    "categoria": "Proteínas",
+    "sinonimos": ["bovino", "patinho", "picanha", "cupim", "fraldinha", "carne moída", "carne moida", "alcatra", "acém"],
+    "validade_dias": { "geladeira": 2, "despensa": 0, "freezer": 180 },
+    "preco_kg": 40.0,
+    "co2_kg": 27.0,
+    "agua_litros_kg": 15400
+  },
+  "carne suína": {
+    "categoria": "Proteínas",
+    "sinonimos": ["carne_suina", "carne suina", "porco", "lombo", "pernil", "carne de porco", "costelinha"],
+    "validade_dias": { "geladeira": 3, "despensa": 0, "freezer": 180 },
+    "preco_kg": 22.0,
+    "co2_kg": 12.1,
+    "agua_litros_kg": 5990
+  },
+  "linguiça": {
+    "categoria": "Proteínas",
+    "sinonimos": ["linguica", "linguiças", "linguiça toscana", "linguiça calabresa", "calabresa"],
+    "validade_dias": { "geladeira": 5, "despensa": 0, "freezer": 90 },
+    "preco_kg": 25.0,
+    "co2_kg": 10.0,
+    "agua_litros_kg": 5000
+  },
+  "bacon": {
+    "categoria": "Proteínas",
+    "sinonimos": ["bacon em cubos", "bacon fatiado", "toucinho"],
+    "validade_dias": { "geladeira": 7, "despensa": 0, "freezer": 90 },
+    "preco_kg": 40.0,
+    "co2_kg": 12.0,
+    "agua_litros_kg": 6000
+  },
+  "presunto": {
+    "categoria": "Proteínas",
+    "sinonimos": ["presunto fatiado", "presunto cozido", "apresuntado"],
+    "validade_dias": { "geladeira": 5, "despensa": 0, "freezer": 60 },
+    "preco_kg": 30.0,
+    "co2_kg": 11.0,
+    "agua_litros_kg": 6000
+  },
+  "peito de peru": {
+    "categoria": "Proteínas",
+    "sinonimos": ["peru fatiado", "blanquet de peru"],
+    "validade_dias": { "geladeira": 5, "despensa": 0, "freezer": 60 },
+    "preco_kg": 45.0,
+    "co2_kg": 10.0,
+    "agua_litros_kg": 4300
+  },
+  "salsicha": {
+    "categoria": "Proteínas",
+    "sinonimos": ["salsichas", "salsicha hot dog"],
+    "validade_dias": { "geladeira": 7, "despensa": 0, "freezer": 90 },
+    "preco_kg": 15.0,
+    "co2_kg": 8.0,
+    "agua_litros_kg": 5000
+  },
+  "tilápia": {
+    "categoria": "Proteínas",
+    "sinonimos": ["tilapia", "filé de tilápia", "file de tilapia", "peixe", "tilápias"],
+    "validade_dias": { "geladeira": 2, "despensa": 0, "freezer": 120 },
+    "preco_kg": 35.0,
+    "co2_kg": 5.1,
+    "agua_litros_kg": 3000
+  },
+  "sardinha fresca": {
+    "categoria": "Proteínas",
+    "sinonimos": ["sardinha", "sardinhas"],
+    "validade_dias": { "geladeira": 2, "despensa": 0, "freezer": 90 },
+    "preco_kg": 18.0,
+    "co2_kg": 3.5,
+    "agua_litros_kg": 500
+  },
+  "sardinha em lata": {
+    "categoria": "Proteínas",
+    "sinonimos": ["lata de sardinha", "sardinha enlatada"],
+    "validade_dias": { "geladeira": 3, "despensa": 1095, "freezer": 0 },
+    "preco_kg": 30.0,
+    "co2_kg": 3.5,
+    "agua_litros_kg": 500
+  },
+  "atum em lata": {
+    "categoria": "Proteínas",
+    "sinonimos": ["atum_lata", "atum", "atum enlatado", "lata de atum"],
+    "validade_dias": { "geladeira": 3, "despensa": 1095, "freezer": 60 },
+    "preco_kg": 55.0,
+    "co2_kg": 6.1,
+    "agua_litros_kg": 500
+  },
+  "camarão": {
+    "categoria": "Proteínas",
+    "sinonimos": ["camarao", "camarões", "camarão cinza", "camarão limpo"],
+    "validade_dias": { "geladeira": 2, "despensa": 0, "freezer": 180 },
+    "preco_kg": 60.0,
+    "co2_kg": 12.0,
+    "agua_litros_kg": 3000
+  },
+  "tofu": {
+    "categoria": "Proteínas",
+    "sinonimos": ["tofu firme", "queijo de soja"],
+    "validade_dias": { "geladeira": 7, "despensa": 0, "freezer": 150 },
+    "preco_kg": 25.0,
+    "co2_kg": 2.0,
+    "agua_litros_kg": 2500
+  },
+  "arroz": {
     "categoria": "Grãos",
-    "sinonimos": ["feijão", "feijão carioca", "feijão preto"],
+    "sinonimos": ["arroz branco", "arroz integral", "pacote de arroz"],
+    "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
+    "preco_kg": 6.0,
+    "co2_kg": 2.7,
+    "agua_litros_kg": 2497
+  },
+  "feijão": {
+    "categoria": "Grãos",
+    "sinonimos": ["feijao", "feijão carioca", "feijão preto", "pacote de feijão"],
     "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
     "preco_kg": 8.0,
     "co2_kg": 0.8,
     "agua_litros_kg": 5050
   },
-  "macarrao": {
+  "lentilha": {
     "categoria": "Grãos",
-    "sinonimos": ["macarrão", "massa", "espaguete", "macarrão parafuso"],
+    "sinonimos": ["lentilhas"],
+    "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
+    "preco_kg": 12.0,
+    "co2_kg": 0.9,
+    "agua_litros_kg": 5870
+  },
+  "grão de bico": {
+    "categoria": "Grãos",
+    "sinonimos": ["grao de bico", "grão-de-bico"],
+    "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
+    "preco_kg": 14.0,
+    "co2_kg": 0.8,
+    "agua_litros_kg": 4180
+  },
+  "macarrão": {
+    "categoria": "Grãos",
+    "sinonimos": ["macarrao", "massa", "espaguete", "macarrão parafuso", "penne"],
     "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
     "preco_kg": 8.0,
     "co2_kg": 1.2,
@@ -255,28 +543,116 @@
     "co2_kg": 1.6,
     "agua_litros_kg": 1790
   },
-  "farinha_trigo": {
+  "farinha de trigo": {
     "categoria": "Grãos",
-    "sinonimos": ["farinha de trigo", "farinha", "trigo"],
+    "sinonimos": ["farinha_trigo", "farinha", "trigo"],
     "validade_dias": { "geladeira": 365, "despensa": 240, "freezer": 365 },
     "preco_kg": 5.0,
     "co2_kg": 1.4,
     "agua_litros_kg": 1850
   },
-  "azeite_oliva": {
+  "farinha de mandioca": {
+    "categoria": "Grãos",
+    "sinonimos": ["farofa", "farinha de mandioca torrada"],
+    "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
+    "preco_kg": 8.0,
+    "co2_kg": 0.8,
+    "agua_litros_kg": 560
+  },
+  "fubá": {
+    "categoria": "Grãos",
+    "sinonimos": ["fuba", "fubá mimoso", "farinha de milho"],
+    "validade_dias": { "geladeira": 365, "despensa": 180, "freezer": 365 },
+    "preco_kg": 6.0,
+    "co2_kg": 1.2,
+    "agua_litros_kg": 1850
+  },
+  "tapioca": {
+    "categoria": "Grãos",
+    "sinonimos": ["goma de tapioca", "polvilho hidratado", "massa de tapioca"],
+    "validade_dias": { "geladeira": 30, "despensa": 30, "freezer": 90 },
+    "preco_kg": 12.0,
+    "co2_kg": 0.8,
+    "agua_litros_kg": 560
+  },
+  "milho de pipoca": {
+    "categoria": "Grãos",
+    "sinonimos": ["pipoca", "milho para pipoca"],
+    "validade_dias": { "geladeira": 365, "despensa": 365, "freezer": 365 },
+    "preco_kg": 10.0,
+    "co2_kg": 1.0,
+    "agua_litros_kg": 1850
+  },
+  "pão": {
+    "categoria": "Padaria",
+    "sinonimos": ["pao", "pão de forma", "pao frances", "pão francês", "pães"],
+    "validade_dias": { "geladeira": 7, "despensa": 3, "freezer": 90 },
+    "preco_kg": 14.0,
+    "co2_kg": 1.3,
+    "agua_litros_kg": 1608
+  },
+  "pão de queijo": {
+    "categoria": "Padaria",
+    "sinonimos": ["pao de queijo", "pão de queijo congelado"],
+    "validade_dias": { "geladeira": 5, "despensa": 1, "freezer": 90 },
+    "preco_kg": 25.0,
+    "co2_kg": 5.0,
+    "agua_litros_kg": 3000
+  },
+  "biscoito": {
+    "categoria": "Padaria",
+    "sinonimos": ["bolacha", "biscoitos", "bolachas", "biscoito recheado", "biscoito água e sal"],
+    "validade_dias": { "geladeira": 180, "despensa": 180, "freezer": 180 },
+    "preco_kg": 18.0,
+    "co2_kg": 2.5,
+    "agua_litros_kg": 1800
+  },
+  "molho de tomate": {
     "categoria": "Outros",
-    "sinonimos": ["azeite", "azeite de oliva", "azeite extravirgem"],
-    "validade_dias": { "geladeira": null, "despensa": 540, "freezer": null },
+    "sinonimos": ["extrato de tomate", "passata", "molho pronto"],
+    "validade_dias": { "geladeira": 7, "despensa": 365, "freezer": 90 },
+    "preco_kg": 12.0,
+    "co2_kg": 1.8,
+    "agua_litros_kg": 300
+  },
+  "azeite de oliva": {
+    "categoria": "Outros",
+    "sinonimos": ["azeite_oliva", "azeite", "azeite extravirgem", "azeite extra virgem"],
+    "validade_dias": { "geladeira": 540, "despensa": 540, "freezer": 0 },
     "preco_kg": 50.0,
     "co2_kg": 5.4,
     "agua_litros_kg": 14400
   },
-  "cafe_po": {
+  "café em pó": {
     "categoria": "Outros",
-    "sinonimos": ["café em pó", "café", "café torrado e moído"],
-    "validade_dias": { "geladeira": null, "despensa": 270, "freezer": 365 },
+    "sinonimos": ["cafe_po", "café", "cafe", "café em po", "café torrado e moído"],
+    "validade_dias": { "geladeira": 90, "despensa": 270, "freezer": 365 },
     "preco_kg": 45.0,
     "co2_kg": 16.5,
     "agua_litros_kg": 18900
+  },
+  "açúcar": {
+    "categoria": "Outros",
+    "sinonimos": ["acucar", "açúcar refinado", "açúcar cristal", "açúcar mascavo"],
+    "validade_dias": { "geladeira": 730, "despensa": 730, "freezer": 730 },
+    "preco_kg": 5.0,
+    "co2_kg": 0.7,
+    "agua_litros_kg": 1780
+  },
+  "mel": {
+    "categoria": "Outros",
+    "sinonimos": ["mel de abelha", "pote de mel"],
+    "validade_dias": { "geladeira": 730, "despensa": 730, "freezer": 730 },
+    "preco_kg": 40.0,
+    "co2_kg": 1.9,
+    "agua_litros_kg": 100
+  },
+  "chocolate": {
+    "categoria": "Outros",
+    "sinonimos": ["barra de chocolate", "chocolate ao leite", "chocolate meio amargo", "achocolatado em barra"],
+    "validade_dias": { "geladeira": 300, "despensa": 240, "freezer": 365 },
+    "preco_kg": 60.0,
+    "co2_kg": 19.0,
+    "agua_litros_kg": 17200
   }
 }
