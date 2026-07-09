@@ -27,6 +27,7 @@ ARQ_HISTORICO      = os.path.join(PASTA_DADOS, "historico.json")
 ARQ_USUARIO        = os.path.join(PASTA_DADOS, "usuario.json")
 ARQ_RECEITAS_CACHE = os.path.join(PASTA_DADOS, "receitas_cache.json")
 ARQ_EXPORT_CSV     = os.path.join(PASTA_DADOS, "historico_export.csv")
+ARQ_LIVRO_RECEITAS = os.path.join(PASTA_DADOS, "livro_receitas.json")
 
 # ---------------------------------------------------------------------------
 # REGRAS DE NEGÓCIO (constantes)

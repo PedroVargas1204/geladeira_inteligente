@@ -3,5 +3,10 @@
   "vegetariano": false,
   "vegano": false,
   "alergias": [],
-  "tempo_max_receita": 60
+  "tempo_max_receita": 120,
+  "idade": 20,
+  "peso_kg": 75.0,
+  "altura_cm": 175,
+  "sexo": "masculino",
+  "nivel_atividade": "moderado"
 }

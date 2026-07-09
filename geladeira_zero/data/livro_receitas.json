@@ -1,5 +1,5 @@
-{
-  "bovino+bovino+pao+tomate": {
+[
+  {
     "titulo": "Picadinho de Carne com Tomate e Torradas",
     "ingredientes": [
       "500g de carne bovina (ex: acém, patinho) cortada em cubos pequenos",
@@ -24,9 +24,20 @@
       "Enquanto o picadinho cozinha, corte as fatias de pão em cubos ou em formato de torradas. Você pode aquecê-los em uma frigideira com um fio de azeite ou no forno até ficarem crocantes.",
       "Verifique o tempero do picadinho e ajuste se necessário. Finalize com cheiro-verde picado.",
       "Sirva o picadinho de carne quente, acompanhado das torradas."
-    ]
+    ],
+    "ingredientes_usados": [
+      "bovino",
+      "bovino",
+      "pao",
+      "tomate"
+    ],
+    "chave": "bovino+bovino+pao+tomate",
+    "origem": "cache",
+    "criada_em": "2026-07-09 17:12",
+    "visto_em": "2026-07-09 17:12",
+    "vezes": 1
   },
-  "bovino+limao+ovo+tomate": {
+  {
     "titulo": "Picadinho Refrescante de Carne com Ovo e Salada de Tomate-Limão",
     "ingredientes": [
       "300g de carne bovina (patinho, acém ou similar), cortada em cubos pequenos",
@@ -50,9 +61,20 @@
       "Retorne a carne à frigideira, misture bem com a cebola e o alho. Se desejar, adicione um pouquinho de água ou caldo para criar um molho leve e raspar o fundo da panela, cozinhando por mais alguns minutos até a carne estar no ponto desejado.",
       "Prepare a salada de tomate: Lave e pique os tomates em cubos pequenos. Em uma tigela, misture os tomates com o suco de meio limão, um fio de azeite, sal e pimenta-do-reino a gosto. Adicione as raspas de limão e a salsinha picada (se usar).",
       "Montagem: Sirva o picadinho de carne quente. Disponha os ovos cozidos cortados ao lado ou por cima. Acompanhe com a salada fresca de tomate e limão. Finalize com um fio de azeite extra sobre tudo."
-    ]
+    ],
+    "ingredientes_usados": [
+      "bovino",
+      "limao",
+      "ovo",
+      "tomate"
+    ],
+    "chave": "bovino+limao+ovo+tomate",
+    "origem": "cache",
+    "criada_em": "2026-07-09 17:12",
+    "visto_em": "2026-07-09 17:12",
+    "vezes": 1
   },
-  "camarão+cebola+macarrão": {
+  {
     "titulo": "Macarrão com Camarão e Cebola Caramelizada",
     "ingredientes": [
       "250g de camarão limpo",
@@ -71,9 +93,19 @@
       "Quando as cebolas estiverem quase prontas, tempere o camarão com sal e pimenta-do-reino. Em outra frigideira (ou na mesma, se a cebola já estiver caramelizada e reservada), adicione um pouco de azeite e doure o alho picado por 30 segundos. Adicione o camarão e cozinhe por 2-3 minutos de cada lado, até que fiquem rosados e cozidos. Não cozinhe demais para não ficarem borrachudos. Se for usar pimenta calabresa, adicione junto com o alho.",
       "Junte o macarrão escorrido à frigideira do camarão. Adicione a cebola caramelizada. Misture bem. Se estiver muito seco, adicione um pouco da água do cozimento do macarrão reservada para criar um molho leve e ajudar a envolver todos os ingredientes.",
       "Finalize com salsinha fresca picada (se estiver usando) e um fio de azeite extra. Sirva imediatamente."
-    ]
+    ],
+    "ingredientes_usados": [
+      "camarão",
+      "cebola",
+      "macarrão"
+    ],
+    "chave": "camarão+cebola+macarrão",
+    "origem": "cache",
+    "criada_em": "2026-07-09 17:12",
+    "visto_em": "2026-07-09 17:12",
+    "vezes": 1
   },
-  "abacate+tomate": {
+  {
     "titulo": "Salada Rústica de Abacate e Tomate",
     "ingredientes": [
       "2 abacates maduros, mas firmes",
@@ -94,9 +126,18 @@
       "Adicione o coentro fresco picado, se estiver usando.",
       "Misture tudo delicadamente para não desmanchar os pedaços de abacate.",
       "Sirva imediatamente como acompanhamento ou prato leve."
-    ]
+    ],
+    "ingredientes_usados": [
+      "abacate",
+      "tomate"
+    ],
+    "chave": "abacate+tomate",
+    "origem": "cache",
+    "criada_em": "2026-07-09 17:12",
+    "visto_em": "2026-07-09 17:12",
+    "vezes": 1
   },
-  "abacate+carne bovina+tomate": {
+  {
     "titulo": "Salada de Carne com Abacate e Tomate",
     "ingredientes": [
       "300g de carne bovina (filé, alcatra ou patinho) cortada em tiras finas",
@@ -118,6 +159,16 @@
       "Misture delicadamente para combinar todos os ingredientes.",
       "Ajuste o sal e a pimenta se necessário.",
       "Sirva imediatamente, podendo ser sobre uma cama de folhas verdes se desejar."
-    ]
+    ],
+    "ingredientes_usados": [
+      "abacate",
+      "carne bovina",
+      "tomate"
+    ],
+    "chave": "abacate+carne bovina+tomate",
+    "origem": "cache",
+    "criada_em": "2026-07-09 17:12",
+    "visto_em": "2026-07-09 17:12",
+    "vezes": 1
   }
-}
+]

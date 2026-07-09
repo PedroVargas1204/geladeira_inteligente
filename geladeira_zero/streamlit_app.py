@@ -33,6 +33,7 @@ import inventario as inv
 import alertas
 import ia
 import impacto
+import saude
 
 
 # Unidades aceitas pelo converter_para_kg() do impacto.py.
@@ -60,6 +61,15 @@ def data_br(data_iso):
         return datetime.strptime(data_iso, "%Y-%m-%d").strftime("%d/%m/%Y")
     except (ValueError, TypeError):
         return data_iso
+
+
+def data_hora_br(texto_iso):
+    """Converte 'AAAA-MM-DD HH:MM' para 'DD/MM/AAAA às HH:MM' (exibição)."""
+    try:
+        momento = datetime.strptime(texto_iso, "%Y-%m-%d %H:%M")
+        return momento.strftime("%d/%m/%Y às %H:%M")
+    except (ValueError, TypeError):
+        return texto_iso
 
 
 # ---------------------------------------------------------------------------
@@ -112,23 +122,25 @@ except Exception as e:
 # CONFIGURAÇÃO DA PÁGINA + BARRA LATERAL
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="Geladeira Zero", page_icon="🧊", layout="wide")
-
-# Cor da barra lateral independente da cor dos inputs.
-# (o tema do config.toml controla os dois juntos; este CSS separa a lateral)
-COR_SIDEBAR = "#484D41"
-COR_BORDA = "#7D8672"   # cor da borda normal
+# ---------------------------------------------------------------------------
+# CORES CUSTOMIZADAS (sidebar e bordas dos inputs)
+# ---------------------------------------------------------------------------
+COR_SIDEBAR = "#34362F"         # ← FUNDO da barra lateral
+COR_TEXTO_SIDEBAR = "#EDF8F2"   # ← TEXTO da barra lateral
+COR_BORDA = "#B8C4A9"           # borda dos inputs
 
 st.markdown(
     f"""
     <style>
+    /* fundo da barra lateral */
     section[data-testid="stSidebar"] > div {{
         background-color: {COR_SIDEBAR};
     }}
-    /* texto da barra lateral em branco (fundo escuro pede texto claro) */
+    /* texto da barra lateral */
     section[data-testid="stSidebar"] * {{
-        color: #FFFFFF !important;
+        color: {COR_TEXTO_SIDEBAR} !important;
     }}
-    /* qualquer wrapper de campo do BaseWeb (texto, número, select, data) */
+    /* bordas dos inputs (texto, número, select, data) */
     div[data-baseweb="input"],
     div[data-baseweb="select"] > div,
     div[data-baseweb="base-input"],
@@ -138,6 +150,7 @@ st.markdown(
     .stTextInput div[data-baseweb] {{
         border-color: {COR_BORDA} !important;
     }}
+    /* borda verde ao focar/passar o mouse */
     div[data-baseweb="input"]:focus-within,
     div[data-baseweb="select"] > div:hover {{
         border-color: #557A46 !important;
@@ -171,6 +184,7 @@ PAGINAS = [
     "⚠️ Alertas",
     "✅ Consumir / Descartar",
     "🍳 Sugerir receita",
+    "📖 Livro de receitas",
     "🌱 Impacto",
     "⚙️ Configurações",
     "💾 Exportar CSV",
@@ -234,7 +248,7 @@ if pagina == "📊 Painel":
                 st.error(f"**{item['nome']}** venceu há {abs(dias)} dia(s).")
             for item, dias in itens_vencendo:
                 if dias == 0:
-                    st.warning(f"**{item['nome']}** vence **HOJE**.")
+                    st.error(f"**{item['nome']}** vence **HOJE**.")
                 else:
                     st.info(f"**{item['nome']}** vence em {dias} dia(s).")
 
@@ -402,7 +416,7 @@ elif pagina == "⚠️ Alertas":
             if dias < 0:
                 st.error(f"**{item['nome']}** — venceu há {abs(dias)} dia(s)")
             elif dias == 0:
-                st.warning(f"**{item['nome']}** — vence **HOJE**")
+                st.error(f"**{item['nome']}** — vence **HOJE**")
             else:
                 st.info(f"**{item['nome']}** — vence em {dias} dia(s)")
 
@@ -565,8 +579,71 @@ elif pagina == "🍳 Sugerir receita":
 
             st.divider()
             st.caption("Não curtiu? Clique em ✨ Gerar receita de novo. "
-                       "Depois de cozinhar, registre os itens em "
-                       "✅ Consumir / Descartar para contar no seu impacto.")
+                       "Toda receita gerada fica guardada no "
+                       "📖 Livro de receitas para você refazer quando quiser.")
+
+
+# ---------------------------------------------------------------------------
+# PÁGINA: LIVRO DE RECEITAS
+# ---------------------------------------------------------------------------
+elif pagina == "📖 Livro de receitas":
+    st.header("📖 Livro de receitas")
+    st.caption("Todas as receitas que você já visualizou, guardadas para "
+               "refazer quando bater a fome de novo.")
+
+    livro = ia.listar_livro()
+    if not livro:
+        st.info("Seu livro ainda está vazio. Gere uma receita em "
+                "🍳 Sugerir receita e ela aparece aqui automaticamente.")
+    else:
+        busca = st.text_input("🔎 Buscar por título ou ingrediente",
+                              placeholder="ex.: camarão")
+        consulta = busca.strip().lower()
+
+        ORIGENS = {"ia": "🤖 IA", "cache": "💾 cache local",
+                   "generica": "receita base"}
+
+        # Percorre do fim para o começo (mais recentes primeiro), levando
+        # junto o índice REAL na lista salva — é ele que o botão de
+        # remover usa, então a exclusão nunca pega a receita errada.
+        exibidas = 0
+        for indice in range(len(livro) - 1, -1, -1):
+            rec = livro[indice]
+            texto_busca = (rec.get("titulo", "") + " " +
+                           " ".join(rec.get("ingredientes_usados", []))
+                           ).lower()
+            if consulta and consulta not in texto_busca:
+                continue
+            exibidas += 1
+
+            usados = ", ".join(rec.get("ingredientes_usados", []))
+            with st.expander(f"{rec.get('titulo', 'Sem título')}  ·  {usados}"):
+                vezes = rec.get("vezes", 1)
+                st.caption(
+                    f"Origem: {ORIGENS.get(rec.get('origem'), rec.get('origem'))} · "
+                    f"gerada em {data_hora_br(rec.get('criada_em', '?'))} · "
+                    f"vista {vezes} vez(es)"
+                )
+                col_ing, col_prep = st.columns([1, 2], gap="large")
+                with col_ing:
+                    st.markdown("**Ingredientes**")
+                    for ing in rec.get("ingredientes", []):
+                        st.markdown(f"- {ing}")
+                with col_prep:
+                    st.markdown("**Modo de preparo**")
+                    for i, passo in enumerate(rec.get("modo_preparo", []),
+                                              start=1):
+                        st.markdown(f"**{i}.** {passo}")
+
+                if st.button("🗑️ Remover do livro", key=f"remover_{indice}"):
+                    ia.remover_do_livro(indice)
+                    avisar("Receita removida do livro.", "🗑️")
+                    st.rerun()
+
+        if exibidas == 0:
+            st.info("Nenhuma receita encontrada com essa busca.")
+        else:
+            st.caption(f"{exibidas} de {len(livro)} receita(s).")
 
 
 # ---------------------------------------------------------------------------
@@ -618,12 +695,56 @@ elif pagina == "⚙️ Configurações":
     st.caption("A IA usa essas preferências ao criar receitas: restrições "
                "alimentares, alergias e tempo máximo de preparo.")
     u = estado["usuario"]
+
+    # Opções fixas do formulário (rótulos amigáveis -> valor salvo).
+    OPCOES_SEXO = {
+        "Prefiro não informar": None,
+        "Feminino": "feminino",
+        "Masculino": "masculino",
+    }
+    niveis_chaves = list(saude.NIVEIS_ATIVIDADE.keys())
+
     with st.form("form_config"):
+        st.markdown("##### Perfil")
         nome = st.text_input("Seu nome", value=u.get("nome", ""))
-        col1, col2 = st.columns(2)
-        vegetariano = col1.checkbox("🥦 Vegetariano",
+
+        st.markdown("##### Sobre você")
+        st.caption("Usado para estimar sua taxa metabólica e gasto "
+                   "energético diário (em breve, no painel).")
+        col1, col2, col3 = st.columns(3)
+        idade = col1.number_input("Idade (anos)", min_value=0, max_value=120,
+                                  value=int(u.get("idade") or 0), step=1)
+        peso = col2.number_input("Peso (kg)", min_value=0.0, max_value=400.0,
+                                 value=float(u.get("peso_kg") or 0.0),
+                                 step=0.5, format="%.1f")
+        altura = col3.number_input("Altura (cm)", min_value=0, max_value=250,
+                                   value=int(u.get("altura_cm") or 0), step=1)
+
+        col4, col5 = st.columns(2)
+        rotulos_sexo = list(OPCOES_SEXO.keys())
+        sexo_atual = u.get("sexo")
+        indice_sexo = 0
+        for i, (rotulo_s, valor_s) in enumerate(OPCOES_SEXO.items()):
+            if valor_s == sexo_atual:
+                indice_sexo = i
+        sexo_rotulo = col4.selectbox("Sexo (usado só no cálculo)",
+                                     rotulos_sexo, index=indice_sexo)
+
+        nivel_atual = u.get("nivel_atividade", "sedentario")
+        indice_nivel = (niveis_chaves.index(nivel_atual)
+                        if nivel_atual in niveis_chaves else 0)
+        nivel = col5.selectbox(
+            "Nível de atividade física",
+            niveis_chaves,
+            index=indice_nivel,
+            format_func=lambda n: saude.NIVEIS_ATIVIDADE[n]["rotulo"],
+        )
+
+        st.markdown("##### Preferências de receita")
+        col6, col7 = st.columns(2)
+        vegetariano = col6.checkbox("🥦 Vegetariano",
                                     value=u.get("vegetariano", False))
-        vegano = col2.checkbox("🌱 Vegano", value=u.get("vegano", False))
+        vegano = col7.checkbox("🌱 Vegano", value=u.get("vegano", False))
         alergias_txt = st.text_input(
             "Alergias (separadas por vírgula)",
             value=", ".join(u.get("alergias", [])),
@@ -635,6 +756,11 @@ elif pagina == "⚙️ Configurações":
 
     if salvar:
         u["nome"] = nome
+        u["idade"] = int(idade) or None
+        u["peso_kg"] = float(peso) or None
+        u["altura_cm"] = int(altura) or None
+        u["sexo"] = OPCOES_SEXO[sexo_rotulo]
+        u["nivel_atividade"] = nivel
         u["vegetariano"] = vegetariano
         u["vegano"] = vegano
         u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
@@ -642,6 +768,28 @@ elif pagina == "⚙️ Configurações":
         salvar_estado(estado)
         avisar("Preferências salvas!", "⚙️")
         st.rerun()
+
+    # PRÉVIA ENERGÉTICA: aparece quando os dados estão completos.
+    tmb, gasto = saude.resumo_energetico(u)
+    if tmb is not None:
+        st.divider()
+        st.subheader("Sua estimativa energética")
+        col_tmb, col_gasto = st.columns(2)
+        col_tmb.metric("Taxa metabólica basal",
+                       f"{tmb} kcal/dia",
+                       help="Energia mínima que seu corpo gasta em repouso "
+                            "(equação de Mifflin-St Jeor).")
+        if gasto is not None:
+            col_gasto.metric("Gasto diário estimado",
+                             f"{gasto} kcal/dia",
+                             help="TMB multiplicada pelo seu nível de "
+                                  "atividade física.")
+        st.caption("Estimativas populacionais, apenas informativas — "
+                   "não substituem a avaliação de um profissional de "
+                   "saúde ou nutricionista.")
+    elif any([u.get("idade"), u.get("peso_kg"), u.get("altura_cm")]):
+        st.caption("Preencha idade, peso, altura e sexo para ver sua "
+                   "estimativa energética.")
 
 
 # ---------------------------------------------------------------------------

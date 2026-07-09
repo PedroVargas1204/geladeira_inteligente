@@ -10,6 +10,7 @@ Responsável (slides): Pessoa C
 
 import os
 import json
+from datetime import datetime
 
 import config
 import persistencia
@@ -137,6 +138,63 @@ def receita_generica(ingredientes):
 
 
 # ---------------------------------------------------------------------------
+# 5) LIVRO DE RECEITAS — histórico permanente do que já foi visualizado
+# ---------------------------------------------------------------------------
+def registrar_no_livro(receita, origem, ingredientes):
+    """
+    Guarda a receita no livro (data/livro_receitas.json) — um histórico
+    PERMANENTE de tudo que o usuário já visualizou, para poder refazer.
+    Diferente do cache, que existe só para o modo offline e sobrescreve
+    por combinação de ingredientes.
+
+    Se a mesma receita (mesmo título + mesma combinação) já estiver no
+    livro, só incrementa o contador e atualiza a data da última vez.
+    Nunca levanta exceção: um problema aqui não pode impedir a receita
+    de chegar ao usuário.
+    """
+    try:
+        livro = persistencia.carregar_json(config.ARQ_LIVRO_RECEITAS, [])
+        chave = chave_cache(ingredientes)
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        for registro in livro:
+            if (registro.get("titulo") == receita.get("titulo")
+                    and registro.get("chave") == chave):
+                registro["vezes"] = registro.get("vezes", 1) + 1
+                registro["visto_em"] = agora
+                persistencia.salvar_json(config.ARQ_LIVRO_RECEITAS, livro)
+                return
+
+        livro.append({
+            "titulo": receita.get("titulo", "Receita sem título"),
+            "ingredientes": receita.get("ingredientes", []),
+            "modo_preparo": receita.get("modo_preparo", []),
+            "ingredientes_usados": list(ingredientes),
+            "chave": chave,
+            "origem": origem,
+            "criada_em": agora,
+            "visto_em": agora,
+            "vezes": 1,
+        })
+        persistencia.salvar_json(config.ARQ_LIVRO_RECEITAS, livro)
+    except Exception as erro:
+        print(f"[DEBUG] Falha ao registrar no livro: {repr(erro)}")
+
+
+def listar_livro():
+    """Devolve todas as receitas do livro (lista de dicionários)."""
+    return persistencia.carregar_json(config.ARQ_LIVRO_RECEITAS, [])
+
+
+def remover_do_livro(indice):
+    """Remove a receita na posição `indice` do livro e salva."""
+    livro = persistencia.carregar_json(config.ARQ_LIVRO_RECEITAS, [])
+    if 0 <= indice < len(livro):
+        livro.pop(indice)
+        persistencia.salvar_json(config.ARQ_LIVRO_RECEITAS, livro)
+
+
+# ---------------------------------------------------------------------------
 # FUNÇÃO PRINCIPAL DO MÓDULO — orquestra tudo com fallback
 # ---------------------------------------------------------------------------
 def sugerir_receita(inventario, usuario, ingredientes=None):
@@ -160,6 +218,7 @@ def sugerir_receita(inventario, usuario, ingredientes=None):
         # Deu certo: guarda no cache para uso offline futuro.
         cache[chave] = receita
         persistencia.salvar_json(config.ARQ_RECEITAS_CACHE, cache)
+        registrar_no_livro(receita, "ia", ingredientes)
         return receita, "ia"
     except Exception as erro:
         # Qualquer falha (sem chave, sem internet, timeout, erro HTTP...)
@@ -168,5 +227,8 @@ def sugerir_receita(inventario, usuario, ingredientes=None):
         print(f"[DEBUG] Falha na IA: {repr(erro)}")
         # Plano B:
         if chave in cache:
+            registrar_no_livro(cache[chave], "cache", ingredientes)
             return cache[chave], "cache"
-        return receita_generica(ingredientes), "generica"
+        receita = receita_generica(ingredientes)
+        registrar_no_livro(receita, "generica", ingredientes)
+        return receita, "generica"
