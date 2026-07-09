@@ -25,5 +25,31 @@
       "Verifique o tempero do picadinho e ajuste se necessário. Finalize com cheiro-verde picado.",
       "Sirva o picadinho de carne quente, acompanhado das torradas."
     ]
+  },
+  "bovino+limao+ovo+tomate": {
+    "titulo": "Picadinho Refrescante de Carne com Ovo e Salada de Tomate-Limão",
+    "ingredientes": [
+      "300g de carne bovina (patinho, acém ou similar), cortada em cubos pequenos",
+      "2 ovos grandes",
+      "1 limão siciliano (ou taiti), suco e raspas",
+      "2 tomates médios maduros",
+      "1 cebola pequena",
+      "2 dentes de alho",
+      "Azeite de oliva extra virgem a gosto",
+      "Sal a gosto",
+      "Pimenta-do-reino moída na hora a gosto",
+      "Salsinha fresca picada a gosto (opcional)",
+      "Páprica defumada a gosto (opcional)",
+      "Cominho em pó a gosto (opcional)"
+    ],
+    "modo_preparo": [
+      "Cozinhe os ovos: Coloque os ovos em uma panela com água fria e leve ao fogo alto. Assim que a água ferver, cozinhe por 8-10 minutos para ovos cozidos. Resfrie em água gelada, descasque e corte em rodelas ou quartos.",
+      "Prepare a carne: Tempere a carne bovina em cubos com sal, pimenta-do-reino, páprica e cominho (se usar).",
+      "Em uma frigideira grande, aqueça um fio de azeite em fogo médio-alto. Adicione a carne e doure por todos os lados. Retire a carne da frigideira e reserve.",
+      "Na mesma frigideira, adicione mais um pouco de azeite se necessário. Refogue a cebola picada até ficar translúcida (cerca de 3-5 minutos). Adicione o alho picado e refogue por mais 1 minuto até ficar aromático.",
+      "Retorne a carne à frigideira, misture bem com a cebola e o alho. Se desejar, adicione um pouquinho de água ou caldo para criar um molho leve e raspar o fundo da panela, cozinhando por mais alguns minutos até a carne estar no ponto desejado.",
+      "Prepare a salada de tomate: Lave e pique os tomates em cubos pequenos. Em uma tigela, misture os tomates com o suco de meio limão, um fio de azeite, sal e pimenta-do-reino a gosto. Adicione as raspas de limão e a salsinha picada (se usar).",
+      "Montagem: Sirva o picadinho de carne quente. Disponha os ovos cozidos cortados ao lado ou por cima. Acompanhe com a salada fresca de tomate e limão. Finalize com um fio de azeite extra sobre tudo."
+    ]
   }
 }

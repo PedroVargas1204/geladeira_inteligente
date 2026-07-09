@@ -78,7 +78,14 @@ st.set_page_config(page_title="Geladeira Zero", page_icon="🧊", layout="wide")
 
 nome_usuario = estado["usuario"].get("nome") or "visitante"
 ativos = len(estado["inventario"])
-vencendo = len(alertas.calcular_alertas(estado["inventario"], config.DIAS_ALERTA))
+
+# Separa os alertas em duas listas: já vencidos (dias < 0) e
+# vencendo nos próximos DIAS_ALERTA dias (0 <= dias <= DIAS_ALERTA).
+todos_alertas = alertas.calcular_alertas(estado["inventario"], config.DIAS_ALERTA)
+itens_vencidos = [(item, dias) for (item, dias) in todos_alertas if dias < 0]
+itens_vencendo = [(item, dias) for (item, dias) in todos_alertas if dias >= 0]
+vencendo = len(itens_vencendo)
+vencidos = len(itens_vencidos)
 _, _, _, reais_economizados = impacto_seguro(estado["historico"], estado["base"])
 
 with st.sidebar:
@@ -86,6 +93,7 @@ with st.sidebar:
     st.caption(f"Olá, {nome_usuario}!")
     st.metric("Itens ativos", ativos)
     st.metric(f"Vencendo em {config.DIAS_ALERTA} dias", vencendo)
+    st.metric("Vencidos", vencidos)
     st.metric("Economia acumulada", f"R$ {reais_economizados:.2f}")
     st.divider()
     pagina = st.radio(
@@ -109,20 +117,25 @@ with st.sidebar:
 # ---------------------------------------------------------------------------
 if pagina == "📊 Painel":
     st.header("Painel geral")
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("Itens no inventário", ativos)
-    col2.metric("Vencendo em breve", vencendo)
-    col3.metric("Economia (R$)", f"{reais_economizados:.2f}")
+    col2.metric(f"Vencendo em {config.DIAS_ALERTA} dias", vencendo)
+    col3.metric("Vencidos", vencidos)
+    col4.metric("Economia (R$)", f"{reais_economizados:.2f}")
+
+    st.subheader("Já vencidos")
+    if not itens_vencidos:
+        st.success("Nenhum item vencido. 🎉")
+    else:
+        for item, dias in itens_vencidos:
+            st.error(f"**{item['nome']}** venceu há {abs(dias)} dia(s).")
 
     st.subheader("Próximos a vencer")
-    lista = alertas.calcular_alertas(estado["inventario"], config.DIAS_ALERTA)
-    if not lista:
+    if not itens_vencendo:
         st.success("Nenhum item vencendo nos próximos dias. 🎉")
     else:
-        for item, dias in lista:
-            if dias < 0:
-                st.error(f"**{item['nome']}** venceu há {abs(dias)} dia(s).")
-            elif dias == 0:
+        for item, dias in itens_vencendo:
+            if dias == 0:
                 st.warning(f"**{item['nome']}** vence HOJE.")
             else:
                 st.info(f"**{item['nome']}** vence em {dias} dia(s).")

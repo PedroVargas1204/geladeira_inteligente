@@ -63,6 +63,3 @@ IA_API_URL = (
     f"{IA_MODEL}:generateContent"
 )
 IA_NOME_VARIAVEL_CHAVE = "IA_API_KEY"
-
-# 
-#  essa é a chave

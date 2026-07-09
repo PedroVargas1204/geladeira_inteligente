@@ -23,6 +23,12 @@ try:
 except ImportError:
     TEM_REQUESTS = False
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # carrega o .env para as variáveis de ambiente
+except ImportError:
+    pass  # sem a biblioteca, segue valendo só o que vier do terminal
+
 
 # ---------------------------------------------------------------------------
 # 1) ESCOLHER OS INGREDIENTES

@@ -6,5 +6,37 @@
     "local": "despensa",
     "data_compra": "2026-05-09",
     "data_validade": "2026-05-23"
+  },
+  {
+    "nome": "abacate",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "local": "geladeira",
+    "data_compra": "2026-07-09",
+    "data_validade": "2026-07-16"
+  },
+  {
+    "nome": "bovino",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "local": "geladeira",
+    "data_compra": "2026-07-01",
+    "data_validade": "2026-07-03"
+  },
+  {
+    "nome": "limao",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "local": "despensa",
+    "data_compra": "2026-07-02",
+    "data_validade": "2026-07-09"
+  },
+  {
+    "nome": "tomate",
+    "quantidade": 1.0,
+    "unidade": "kg",
+    "local": "geladeira",
+    "data_compra": "2026-07-02",
+    "data_validade": "2026-07-09"
   }
 ]
