@@ -1,2 +1,21 @@
-.env
+# Bytecode / caches do Python
 __pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Segredos (a chave da IA vive em variável de ambiente ou .env — nunca no git)
+.env
+
+# Dados do usuário: são PESSOAIS e mudam a cada uso — não versionar.
+# A exceção é base_alimentos.json (catálogo do sistema), que continua no git.
+geladeira_zero/data/*
+!geladeira_zero/data/base_alimentos.json
+
+# IDEs
+.vscode/
+.idea/

@@ -28,20 +28,13 @@ import impacto
 # CARREGAR / SALVAR TODO O ESTADO
 # ---------------------------------------------------------------------------
 def carregar_tudo():
-    """Lê os arquivos JSON e devolve um dicionário com todo o estado."""
-    return {
-        "base": persistencia.carregar_json(config.ARQ_BASE_ALIMENTOS, {}),
-        "inventario": persistencia.carregar_json(config.ARQ_INVENTARIO, []),
-        "historico": persistencia.carregar_json(config.ARQ_HISTORICO, []),
-        "usuario": persistencia.carregar_json(config.ARQ_USUARIO, {}),
-    }
+    """Lê o banco de dados e devolve um dicionário com todo o estado."""
+    return persistencia.carregar_estado()
 
 
 def salvar_tudo(estado):
-    """Grava o estado de volta no disco (chamado a cada ação)."""
-    persistencia.salvar_json(config.ARQ_INVENTARIO, estado["inventario"])
-    persistencia.salvar_json(config.ARQ_HISTORICO, estado["historico"])
-    persistencia.salvar_json(config.ARQ_USUARIO, estado["usuario"])
+    """Grava o estado no banco, em uma transação (chamado a cada ação)."""
+    persistencia.salvar_estado(estado)
 
 
 # ---------------------------------------------------------------------------

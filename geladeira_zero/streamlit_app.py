@@ -76,20 +76,13 @@ def data_hora_br(texto_iso):
 # ESTADO: carregar do disco e salvar de volta
 # ---------------------------------------------------------------------------
 def carregar_estado():
-    """Lê os arquivos JSON e devolve todo o estado (igual ao main.carregar_tudo)."""
-    return {
-        "base": persistencia.carregar_json(config.ARQ_BASE_ALIMENTOS, {}),
-        "inventario": persistencia.carregar_json(config.ARQ_INVENTARIO, []),
-        "historico": persistencia.carregar_json(config.ARQ_HISTORICO, []),
-        "usuario": persistencia.carregar_json(config.ARQ_USUARIO, {}),
-    }
+    """Lê o banco de dados e devolve todo o estado (igual ao main.carregar_tudo)."""
+    return persistencia.carregar_estado()
 
 
 def salvar_estado(estado):
-    """Grava inventário, histórico e usuário de volta no disco."""
-    persistencia.salvar_json(config.ARQ_INVENTARIO, estado["inventario"])
-    persistencia.salvar_json(config.ARQ_HISTORICO, estado["historico"])
-    persistencia.salvar_json(config.ARQ_USUARIO, estado["usuario"])
+    """Grava inventário, histórico e usuário no banco, em uma transação."""
+    persistencia.salvar_estado(estado)
 
 
 def impacto_seguro(historico, base):

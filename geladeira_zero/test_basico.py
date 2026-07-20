@@ -234,12 +234,45 @@ def test_chave_cache_normaliza_maiusculas():
 
 
 # ===========================================================================
-# persistencia.carregar_json  — defensiva: arquivo inexistente devolve padrão
+# persistencia + banco — ida e volta: o que salvo é o que carrego
 # ===========================================================================
-def test_carregar_json_inexistente_devolve_padrao():
-    # Um caminho que não existe deve devolver o padrão, sem quebrar.
-    assert persistencia.carregar_json("nao_existe_xyz.json", []) == []
-    assert persistencia.carregar_json("nao_existe_xyz.json", {}) == {}
+def test_estado_ida_e_volta_no_banco():
+    # Usa um banco TEMPORÁRIO para não tocar no data/geladeira.db real.
+    import os
+    import tempfile
+
+    import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = db.criar_engine(os.path.join(pasta, "teste.db"))
+        db.usar_engine(engine_teste)
+        try:
+            estado = {
+                "inventario": [{
+                    "nome": "tomate", "quantidade": 2.0, "unidade": "unid",
+                    "local": "geladeira", "data_compra": "2026-07-01",
+                    "data_validade": "2026-07-08",
+                }],
+                "historico": [{
+                    "nome": "leite", "quantidade": 1.0, "unidade": "l",
+                    "categoria": "Laticínios", "status": "consumido",
+                    "data": "2026-07-02",
+                }],
+                "usuario": {"nome": "Teste", "vegetariano": True,
+                            "alergias": ["amendoim"]},
+            }
+            persistencia.salvar_estado(estado)
+            lido = persistencia.carregar_estado()
+            assert lido["inventario"][0]["nome"] == "tomate"
+            assert lido["inventario"][0]["data_validade"] == "2026-07-08"
+            assert lido["historico"][0]["status"] == "consumido"
+            assert lido["usuario"]["vegetariano"] is True
+            assert lido["usuario"]["alergias"] == ["amendoim"]
+        finally:
+            # Fecha as conexões (no Windows, arquivo aberto não pode ser
+            # apagado) e zera o engine global: o próximo uso recria o real.
+            engine_teste.dispose()
+            db.usar_engine(None)
 
 
 # ===========================================================================

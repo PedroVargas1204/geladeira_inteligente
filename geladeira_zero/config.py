@@ -20,8 +20,18 @@ import os
 PASTA_BASE = os.path.dirname(os.path.abspath(__file__))
 PASTA_DADOS = os.path.join(PASTA_BASE, "data")
 
-# Caminho completo de cada um dos 5 arquivos JSON.
+# O BANCO DE DADOS (SQLite): um único arquivo com todas as tabelas.
+ARQ_BANCO = os.path.join(PASTA_DADOS, "geladeira.db")
+
+# Enquanto o app não tem login, todo dado pertence a este usuário.
+# Quando o multi-usuário chegar, este valor virá da sessão de login.
+USUARIO_PADRAO_ID = 1
+
+# Catálogo do sistema (só leitura) — continua em JSON, versionado no git.
 ARQ_BASE_ALIMENTOS = os.path.join(PASTA_DADOS, "base_alimentos.json")
+
+# Caminhos dos ANTIGOS arquivos JSON de dados. Só são usados pelo script
+# migrar_json_para_db.py (importação única). Depois de migrar, podem sumir.
 ARQ_INVENTARIO     = os.path.join(PASTA_DADOS, "inventario.json")
 ARQ_HISTORICO      = os.path.join(PASTA_DADOS, "historico.json")
 ARQ_USUARIO        = os.path.join(PASTA_DADOS, "usuario.json")

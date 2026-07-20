@@ -153,7 +153,7 @@ def registrar_no_livro(receita, origem, ingredientes):
     de chegar ao usuário.
     """
     try:
-        livro = persistencia.carregar_json(config.ARQ_LIVRO_RECEITAS, [])
+        livro = persistencia.carregar_livro()
         chave = chave_cache(ingredientes)
         agora = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -162,7 +162,7 @@ def registrar_no_livro(receita, origem, ingredientes):
                     and registro.get("chave") == chave):
                 registro["vezes"] = registro.get("vezes", 1) + 1
                 registro["visto_em"] = agora
-                persistencia.salvar_json(config.ARQ_LIVRO_RECEITAS, livro)
+                persistencia.salvar_livro(livro)
                 return
 
         livro.append({
@@ -176,22 +176,22 @@ def registrar_no_livro(receita, origem, ingredientes):
             "visto_em": agora,
             "vezes": 1,
         })
-        persistencia.salvar_json(config.ARQ_LIVRO_RECEITAS, livro)
+        persistencia.salvar_livro(livro)
     except Exception as erro:
         print(f"[DEBUG] Falha ao registrar no livro: {repr(erro)}")
 
 
 def listar_livro():
     """Devolve todas as receitas do livro (lista de dicionários)."""
-    return persistencia.carregar_json(config.ARQ_LIVRO_RECEITAS, [])
+    return persistencia.carregar_livro()
 
 
 def remover_do_livro(indice):
     """Remove a receita na posição `indice` do livro e salva."""
-    livro = persistencia.carregar_json(config.ARQ_LIVRO_RECEITAS, [])
+    livro = persistencia.carregar_livro()
     if 0 <= indice < len(livro):
         livro.pop(indice)
-        persistencia.salvar_json(config.ARQ_LIVRO_RECEITAS, livro)
+        persistencia.salvar_livro(livro)
 
 
 # ---------------------------------------------------------------------------
@@ -208,7 +208,7 @@ def sugerir_receita(inventario, usuario, ingredientes=None):
     """
     if ingredientes is None:
         ingredientes = selecionar_ingredientes(inventario)
-    cache = persistencia.carregar_json(config.ARQ_RECEITAS_CACHE, {})
+    cache = persistencia.carregar_cache()
     chave = chave_cache(ingredientes)
 
     # Tenta a IA primeiro.
@@ -217,7 +217,7 @@ def sugerir_receita(inventario, usuario, ingredientes=None):
         receita = consultar_ia(prompt)
         # Deu certo: guarda no cache para uso offline futuro.
         cache[chave] = receita
-        persistencia.salvar_json(config.ARQ_RECEITAS_CACHE, cache)
+        persistencia.salvar_cache(cache)
         registrar_no_livro(receita, "ia", ingredientes)
         return receita, "ia"
     except Exception as erro:
