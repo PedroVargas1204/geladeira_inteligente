@@ -276,6 +276,78 @@ def test_estado_ida_e_volta_no_banco():
 
 
 # ===========================================================================
+# auth — cadastro, login e proteção da senha
+# ===========================================================================
+def test_autenticacao_cadastro_e_login():
+    import os
+    import tempfile
+
+    import auth
+    import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = db.criar_engine(os.path.join(pasta, "auth.db"))
+        db.usar_engine(engine_teste)
+        try:
+            # E-mail é normalizado (maiúsculas e espaços não criam outra conta).
+            uid = auth.cadastrar(" Pedro@Email.com ", "senhaforte123", "Pedro")
+            assert auth.autenticar("pedro@email.com", "senhaforte123") == uid
+
+            # A senha NUNCA fica legível no banco.
+            with db.abrir_sessao() as sessao:
+                guardado = sessao.get(db.Usuario, uid).senha_hash
+            assert "senhaforte123" not in guardado
+
+            # O sal do bcrypt faz a mesma senha gerar hashes diferentes.
+            assert auth.gerar_hash("igual") != auth.gerar_hash("igual")
+
+            # Senha errada e e-mail inexistente devolvem a MESMA mensagem,
+            # para não revelar quais e-mails estão cadastrados.
+            erros = []
+            for email, senha in [("pedro@email.com", "errada"),
+                                 ("ninguem@email.com", "senhaforte123")]:
+                try:
+                    auth.autenticar(email, senha)
+                    raise AssertionError("deixou entrar sem credencial válida")
+                except auth.ErroAutenticacao as erro:
+                    erros.append(str(erro))
+            assert erros[0] == erros[1]
+
+            # E-mail repetido é recusado.
+            try:
+                auth.cadastrar("pedro@email.com", "outrasenha123")
+                raise AssertionError("aceitou e-mail duplicado")
+            except auth.ErroAutenticacao:
+                pass
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_senha_curta_e_email_invalido_sao_recusados():
+    import os
+    import tempfile
+
+    import auth
+    import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = db.criar_engine(os.path.join(pasta, "auth2.db"))
+        db.usar_engine(engine_teste)
+        try:
+            for email, senha in [("semarroba", "senhaforte123"),
+                                 ("a@b.com", "curta")]:
+                try:
+                    auth.cadastrar(email, senha)
+                    raise AssertionError(f"aceitou cadastro inválido: {email}")
+                except auth.ErroAutenticacao:
+                    pass
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+# ===========================================================================
 # EXECUÇÃO SEM PYTEST: roda tudo com asserts e conta os resultados.
 # (Permite "python test_basico.py" mesmo sem o pytest instalado.)
 # ===========================================================================

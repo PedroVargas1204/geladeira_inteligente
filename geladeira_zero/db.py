@@ -45,6 +45,12 @@ class Usuario(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str] = mapped_column(String, default="")
+    # CREDENCIAIS (etapa multi-usuário).
+    # `email` é único: é ele que identifica a conta no login.
+    # `senha_hash` guarda o resultado do bcrypt — NUNCA a senha em si.
+    # Ambos aceitam None por causa do usuário que já existia antes do login.
+    email: Mapped[str | None] = mapped_column(String, unique=True, default=None)
+    senha_hash: Mapped[str | None] = mapped_column(String, default=None)
     vegetariano: Mapped[bool] = mapped_column(default=False)
     vegano: Mapped[bool] = mapped_column(default=False)
     # Lista de strings gravada como JSON na coluna (ex.: ["amendoim"]).
@@ -147,7 +153,52 @@ def criar_engine(caminho_arquivo):
     """
     engine = create_engine(f"sqlite:///{caminho_arquivo}")
     Base.metadata.create_all(engine)
+    _migrar_colunas_novas(engine)
     return engine
+
+
+def _migrar_colunas_novas(engine):
+    """
+    Migração leve de schema.
+
+    ATENÇÃO ao detalhe que pega todo mundo: `create_all()` só cria tabelas
+    que AINDA NÃO existem — ele nunca altera uma tabela já criada. Então,
+    para quem já tinha um banco antes do login existir, a tabela `usuarios`
+    ficaria sem as colunas `email` e `senha_hash`, e o app quebraria com
+    "no such column".
+
+    Esta função compara as colunas que existem no banco com as que o modelo
+    espera e adiciona as que faltam com ALTER TABLE. É segura para rodar
+    sempre: se não falta nada, não faz nada.
+    """
+    novas = {
+        "usuarios": {
+            "email": "VARCHAR",
+            "senha_hash": "VARCHAR",
+        },
+    }
+
+    with engine.begin() as conexao:
+        for tabela, colunas in novas.items():
+            # PRAGMA table_info devolve uma linha por coluna existente.
+            existentes = {
+                linha[1]
+                for linha in conexao.exec_driver_sql(
+                    f"PRAGMA table_info({tabela})"
+                ).fetchall()
+            }
+            for coluna, tipo in colunas.items():
+                if coluna not in existentes:
+                    conexao.exec_driver_sql(
+                        f"ALTER TABLE {tabela} ADD COLUMN {coluna} {tipo}"
+                    )
+
+        # O SQLite não aceita ADD COLUMN com UNIQUE embutido, então a
+        # unicidade do e-mail é garantida por um índice criado à parte.
+        conexao.exec_driver_sql(
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_email "
+            "ON usuarios (email)"
+        )
 
 
 def usar_engine(engine):
