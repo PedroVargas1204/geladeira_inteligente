@@ -442,6 +442,152 @@ def test_conta_antiga_ganha_login_sem_perder_dados():
 
 
 # ===========================================================================
+# operacoes — gravações pontuais (o que permite duas abas ao mesmo tempo)
+# ===========================================================================
+def _banco_temporario(pasta, nome):
+    """Prepara um banco vazio e devolve (engine, base_de_alimentos)."""
+    import db
+
+    engine = db.criar_engine(f"{pasta}/{nome}")
+    db.usar_engine(engine)
+    return engine
+
+
+def _item_teste(nome, quantidade=1.0, unidade="unid"):
+    return {"nome": nome, "quantidade": quantidade, "unidade": unidade,
+            "local": "geladeira", "data_compra": "2026-07-01",
+            "data_validade": "2026-08-01"}
+
+
+def test_duas_gravacoes_simultaneas_nao_se_apagam():
+    # O cenário que a gravação em massa perdia: duas abas carregam o mesmo
+    # inventário e cada uma adiciona um item. Com escrita pontual, os dois
+    # itens sobrevivem.
+    import tempfile
+
+    import auth
+    import db
+    import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "conc.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            operacoes.adicionar_item(uid, _item_teste("tomate", 3.0))
+
+            persistencia.carregar_estado(uid)  # "aba A" tira sua foto
+            persistencia.carregar_estado(uid)  # "aba B" tira a mesma foto
+            operacoes.adicionar_item(uid, _item_teste("leite", 1.0, "l"))
+            operacoes.adicionar_item(uid, _item_teste("ovo", 6.0))
+
+            nomes = sorted(i["nome"] for i
+                           in persistencia.carregar_estado(uid)["inventario"])
+            assert nomes == ["leite", "ovo", "tomate"]
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_consumo_parcial_e_total_pelo_banco():
+    import tempfile
+
+    import auth
+    import db
+    import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "consumo.db")
+        try:
+            base = persistencia.carregar_base()
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            item_id = operacoes.adicionar_item(uid, _item_teste("tomate", 3.0))
+
+            # Parcial: sobra no inventário e entra 1 registro no histórico.
+            movida, tudo, resto = operacoes.consumir(uid, item_id, base, 1.0)
+            assert (movida, tudo, resto) == (1.0, False, 2.0)
+            estado = persistencia.carregar_estado(uid)
+            assert estado["inventario"][0]["quantidade"] == 2.0
+            assert len(estado["historico"]) == 1
+            assert estado["historico"][0]["status"] == "consumido"
+
+            # Total: o item sai do inventário.
+            operacoes.consumir(uid, item_id, base)
+            estado = persistencia.carregar_estado(uid)
+            assert estado["inventario"] == []
+            assert len(estado["historico"]) == 2
+
+            # Consumir de novo (item já foi, como em outra aba) é erro tratado.
+            try:
+                operacoes.consumir(uid, item_id, base)
+                raise AssertionError("consumiu um item que não existe mais")
+            except operacoes.ItemNaoEncontrado:
+                pass
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_usuario_nao_altera_item_de_outro():
+    # Proteção importante: passar o id de um item alheio não pode funcionar.
+    import tempfile
+
+    import auth
+    import db
+    import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "seguranca.db")
+        try:
+            base = persistencia.carregar_base()
+            ana = auth.cadastrar("ana@email.com", "senhaforte123", "Ana")
+            bob = auth.cadastrar("bob@email.com", "senhaforte456", "Bob")
+            item_da_ana = operacoes.adicionar_item(ana, _item_teste("tomate", 3.0))
+
+            for acao in (operacoes.consumir, operacoes.descartar):
+                try:
+                    acao(bob, item_da_ana, base)
+                    raise AssertionError("Bob alterou um item da Ana")
+                except operacoes.ItemNaoEncontrado:
+                    pass
+
+            estado_ana = persistencia.carregar_estado(ana)
+            assert len(estado_ana["inventario"]) == 1
+            assert estado_ana["historico"] == []
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_salvar_perfil_nao_toca_no_inventario():
+    import tempfile
+
+    import auth
+    import db
+    import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "perfil.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123", "Pedro")
+            operacoes.adicionar_item(uid, _item_teste("tomate", 3.0))
+
+            operacoes.salvar_perfil(uid, {"nome": "Pedro V",
+                                          "tempo_max_receita": 90})
+            estado = persistencia.carregar_estado(uid)
+            assert len(estado["inventario"]) == 1
+            assert estado["usuario"]["nome"] == "Pedro V"
+
+            # Mandar só um campo não apaga os outros.
+            operacoes.salvar_perfil(uid, {"peso_kg": 76.0})
+            estado = persistencia.carregar_estado(uid)
+            assert estado["usuario"]["nome"] == "Pedro V"
+            assert estado["usuario"]["peso_kg"] == 76.0
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+# ===========================================================================
 # EXECUÇÃO SEM PYTEST: roda tudo com asserts e conta os resultados.
 # (Permite "python test_basico.py" mesmo sem o pytest instalado.)
 # ===========================================================================

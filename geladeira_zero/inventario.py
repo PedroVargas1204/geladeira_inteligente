@@ -87,6 +87,23 @@ def listar_ordenado(inventario):
 # ---------------------------------------------------------------------------
 # CONSUMIR / DESCARTAR  -> move para o histórico (com consumo parcial)
 # ---------------------------------------------------------------------------
+def calcular_movimento(quantidade_item, quantidade_pedida):
+    """
+    Decide se um consumo/descarte é TOTAL ou PARCIAL. Função pura: não toca
+    em listas nem no banco, só faz a conta.
+
+    Devolve (quantidade_movida, mover_tudo, resto).
+
+    Existe para que a regra do consumo parcial fique em UM lugar só, usada
+    tanto pela versão em memória (_mover_para_historico) quanto pelas
+    gravações pontuais no banco (operacoes.py).
+    """
+    if quantidade_pedida is None or quantidade_pedida >= quantidade_item:
+        return quantidade_item, True, 0.0
+    # round evita sobras feias de float (ex.: 0.30000000000000004).
+    return quantidade_pedida, False, round(quantidade_item - quantidade_pedida, 4)
+
+
 def _mover_para_historico(inventario, historico, indice, status, base,
                           quantidade=None):
     """
@@ -103,13 +120,10 @@ def _mover_para_historico(inventario, historico, indice, status, base,
     item = inventario[indice]
     qtd_total = item["quantidade"]
 
-    # Decide se é movimento total ou parcial.
-    if quantidade is None or quantidade >= qtd_total:
-        quantidade_movida = qtd_total
-        mover_tudo = True
-    else:
-        quantidade_movida = quantidade
-        mover_tudo = False
+    # Decide se é movimento total ou parcial (regra única, ver acima).
+    quantidade_movida, mover_tudo, resto = calcular_movimento(
+        qtd_total, quantidade
+    )
 
     # Descobre a categoria pelo catálogo (para o impacto agregar depois).
     _, dados = buscar_alimento_por_nome(item["nome"], base)
@@ -128,8 +142,7 @@ def _mover_para_historico(inventario, historico, indice, status, base,
     if mover_tudo:
         inventario.pop(indice)  # remove o item inteiro
     else:
-        # round evita sobras feias de float (ex.: 0.30000000000000004).
-        item["quantidade"] = round(qtd_total - quantidade_movida, 4)
+        item["quantidade"] = resto
 
     return inventario, historico
 

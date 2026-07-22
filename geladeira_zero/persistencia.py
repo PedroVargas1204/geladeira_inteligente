@@ -62,6 +62,11 @@ def buscar_alimento_na_base(nome, base):
 
 def _item_para_dict(item):
     return {
+        # O `id` da linha no banco. É a IDENTIDADE do item: é por ele que as
+        # gravações pontuais sabem exatamente qual linha alterar ou apagar,
+        # sem depender da posição numa lista em memória (que fica velha
+        # assim que outra aba ou outra pessoa mexe no mesmo inventário).
+        "id": item.id,
         "nome": item.nome,
         "quantidade": item.quantidade,
         "unidade": item.unidade,

@@ -29,6 +29,7 @@ import streamlit as st
 
 import config
 import login_ui
+import operacoes
 import persistencia
 import inventario as inv
 import alertas
@@ -81,9 +82,9 @@ def carregar_estado(usuario_id):
     return persistencia.carregar_estado(usuario_id)
 
 
-def salvar_estado(estado, usuario_id):
-    """Grava inventário, histórico e perfil DESTE usuário, em uma transação."""
-    persistencia.salvar_estado(estado, usuario_id)
+# Não existe mais um "salvar_estado" aqui: cada ação grava só o que mudou,
+# através do módulo operacoes (ver operacoes.py). Carregar continua sendo
+# em bloco — ler tudo é barato e não corre risco de sobrescrever nada.
 
 
 def impacto_seguro(historico, base):
@@ -137,8 +138,8 @@ BTN_FUNDO = "#3F4438"           # fundo normal
 BTN_TEXTO = "#EDF8F2"           # texto normal
 BTN_BORDA = "#6B7A5C"           # borda normal
 BTN_FUNDO_HOVER = "#557A46"     # fundo ao passar o mouse
-BTN_TEXTO_HOVER = "#ACC092"     # texto ao passar o mouse
-BTN_BORDA_HOVER = "#E7F3E0"     # borda ao passar o mouse
+BTN_TEXTO_HOVER = "#FFFFFF"     # texto ao passar o mouse
+BTN_BORDA_HOVER = "#8FB57A"     # borda ao passar o mouse
 
 st.markdown(
     f"""
@@ -435,8 +436,7 @@ elif pagina == "➕ Adicionar item":
                 "data_compra": data_iso,
                 "data_validade": validade_prevista,
             }
-            inv.adicionar_item(estado["inventario"], item)
-            salvar_estado(estado, USUARIO_ID)
+            operacoes.adicionar_item(USUARIO_ID, item)
             avisar(f"{nome} adicionado! Vence em "
                    f"{data_br(validade_prevista)}.", "🧊")
             st.rerun()
@@ -515,17 +515,24 @@ elif pagina == "✅ Consumir / Descartar":
 
         col1, col2 = st.columns(2)
         if col1.button("✅ Consumido", type="primary", width="stretch"):
-            inv.marcar_consumido(estado["inventario"], estado["historico"],
-                                 indice, estado["base"], qtd)
-            salvar_estado(estado, USUARIO_ID)
-            avisar(f"{qtd}{unidade} de {item_sel['nome']} consumido(s). "
-                   "Desperdício evitado! 🌱", "✅")
+            try:
+                operacoes.consumir(USUARIO_ID, item_sel["id"],
+                                   estado["base"], qtd)
+            except operacoes.ItemNaoEncontrado as erro:
+                avisar(str(erro), "⚠️")
+            else:
+                avisar(f"{qtd}{unidade} de {item_sel['nome']} consumido(s). "
+                       "Desperdício evitado! 🌱", "✅")
             st.rerun()
         if col2.button("🗑️ Descartado", width="stretch"):
-            inv.marcar_descartado(estado["inventario"], estado["historico"],
-                                  indice, estado["base"], qtd)
-            salvar_estado(estado, USUARIO_ID)
-            avisar(f"{qtd}{unidade} de {item_sel['nome']} descartado(s).", "🗑️")
+            try:
+                operacoes.descartar(USUARIO_ID, item_sel["id"],
+                                    estado["base"], qtd)
+            except operacoes.ItemNaoEncontrado as erro:
+                avisar(str(erro), "⚠️")
+            else:
+                avisar(f"{qtd}{unidade} de {item_sel['nome']} descartado(s).",
+                       "🗑️")
             st.rerun()
 
 
@@ -806,7 +813,7 @@ elif pagina == "⚙️ Configurações":
         u["vegano"] = vegano
         u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
         u["tempo_max_receita"] = tempo
-        salvar_estado(estado, USUARIO_ID)
+        operacoes.salvar_perfil(USUARIO_ID, u)
         avisar("Preferências salvas!", "⚙️")
         st.rerun()
 

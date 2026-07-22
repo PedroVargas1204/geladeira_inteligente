@@ -16,6 +16,7 @@ Responsável (slides): Pessoa A
 from datetime import datetime
 
 import config
+import operacoes
 import persistencia
 import interface
 import inventario as inv
@@ -32,9 +33,8 @@ def carregar_tudo():
     return persistencia.carregar_estado()
 
 
-def salvar_tudo(estado):
-    """Grava o estado no banco, em uma transação (chamado a cada ação)."""
-    persistencia.salvar_estado(estado)
+# Não existe mais um "salvar_tudo": cada ação grava apenas o que mudou,
+# através do módulo operacoes (ver operacoes.py).
 
 
 # ---------------------------------------------------------------------------
@@ -65,8 +65,7 @@ def acao_adicionar(estado):
         "data_compra": data_compra,
         "data_validade": validade,
     }
-    inv.adicionar_item(estado["inventario"], item)
-    salvar_tudo(estado)
+    operacoes.adicionar_item(config.USUARIO_PADRAO_ID, item)
     print(f"  + Adicionado! Validade sugerida: {validade}")
     interface.pausar()
 
@@ -159,24 +158,24 @@ def acao_marcar(estado):
     parcial = qtd < qtd_atual
     resto = round(qtd_atual - qtd, 4)
 
+    item_id = estado["inventario"][real]["id"]
     if escolha == "1":
-        inv.marcar_consumido(estado["inventario"], estado["historico"], real,
-                             estado["base"], qtd)
+        operacoes.consumir(config.USUARIO_PADRAO_ID, item_id,
+                           estado["base"], qtd)
         if parcial:
             print(f"  + Consumido {qtd}{unidade}. Restam {resto}{unidade} "
                   f"no inventário.")
         else:
             print("  + Item totalmente consumido (entrou na economia).")
     else:
-        inv.marcar_descartado(estado["inventario"], estado["historico"], real,
-                              estado["base"], qtd)
+        operacoes.descartar(config.USUARIO_PADRAO_ID, item_id,
+                            estado["base"], qtd)
         if parcial:
             print(f"  - Descartado {qtd}{unidade}. Restam {resto}{unidade} "
                   f"no inventário.")
         else:
             print("  - Item totalmente descartado.")
 
-    salvar_tudo(estado)
     interface.pausar()
 
 
@@ -223,7 +222,7 @@ def acao_configuracoes(estado):
     u["vegano"] = vegano
     u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
     u["tempo_max_receita"] = tempo
-    salvar_tudo(estado)
+    operacoes.salvar_perfil(config.USUARIO_PADRAO_ID, u)
     print("  + Preferências salvas.")
     interface.pausar()
 
