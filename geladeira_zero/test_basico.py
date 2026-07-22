@@ -348,6 +348,100 @@ def test_senha_curta_e_email_invalido_sao_recusados():
 
 
 # ===========================================================================
+# multi-usuário — cada conta enxerga apenas os próprios dados
+# ===========================================================================
+def test_dados_isolados_entre_usuarios():
+    import os
+    import tempfile
+
+    import auth
+    import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = db.criar_engine(os.path.join(pasta, "multi.db"))
+        db.usar_engine(engine_teste)
+        try:
+            ana = auth.cadastrar("ana@email.com", "senhaforte123", "Ana")
+            bob = auth.cadastrar("bob@email.com", "senhaforte456", "Bob")
+
+            persistencia.salvar_estado({
+                "inventario": [{"nome": "tomate", "quantidade": 3.0,
+                                "unidade": "unid", "local": "geladeira",
+                                "data_compra": "2026-07-01",
+                                "data_validade": "2026-07-10"}],
+                "historico": [], "usuario": {"nome": "Ana"},
+            }, ana)
+            persistencia.salvar_estado({
+                "inventario": [{"nome": "camarão", "quantidade": 500.0,
+                                "unidade": "g", "local": "freezer",
+                                "data_compra": "2026-07-05",
+                                "data_validade": "2026-12-01"}],
+                "historico": [], "usuario": {"nome": "Bob"},
+            }, bob)
+
+            nomes_ana = [i["nome"] for i in persistencia.carregar_estado(ana)["inventario"]]
+            nomes_bob = [i["nome"] for i in persistencia.carregar_estado(bob)["inventario"]]
+            assert nomes_ana == ["tomate"]
+            assert nomes_bob == ["camarão"]
+            assert persistencia.carregar_estado(ana)["usuario"]["nome"] == "Ana"
+
+            # Gravar na conta de um não pode alterar a do outro.
+            estado_bob = persistencia.carregar_estado(bob)
+            estado_bob["inventario"].append({
+                "nome": "ovo", "quantidade": 6.0, "unidade": "unid",
+                "local": "geladeira", "data_compra": "2026-07-06",
+                "data_validade": "2026-08-01"})
+            persistencia.salvar_estado(estado_bob, bob)
+            assert len(persistencia.carregar_estado(ana)["inventario"]) == 1
+            assert len(persistencia.carregar_estado(bob)["inventario"]) == 2
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_conta_antiga_ganha_login_sem_perder_dados():
+    # Cenário real da migração: quem já usava o app quando ele era de um
+    # usuário só define e-mail/senha e continua com o mesmo inventário.
+    import os
+    import tempfile
+
+    import auth
+    import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = db.criar_engine(os.path.join(pasta, "legado.db"))
+        db.usar_engine(engine_teste)
+        try:
+            # Conta antiga: tem dados, mas nenhum e-mail.
+            with db.abrir_sessao() as sessao:
+                sessao.add(db.Usuario(id=1, nome="Pedro"))
+                sessao.commit()
+            persistencia.salvar_estado({
+                "inventario": [{"nome": "camarão", "quantidade": 500.0,
+                                "unidade": "g", "local": "freezer",
+                                "data_compra": "2026-06-29",
+                                "data_validade": "2026-12-26"}],
+                "historico": [], "usuario": {"nome": "Pedro"},
+            }, 1)
+
+            assert auth.existe_alguma_conta() is False
+            assert auth.conta_legada_id() == 1
+
+            auth.definir_credenciais(1, "pedro@email.com", "senhaforte123")
+            assert auth.autenticar("pedro@email.com", "senhaforte123") == 1
+
+            # O que mais importa: os dados continuam lá.
+            estado = persistencia.carregar_estado(1)
+            assert estado["inventario"][0]["nome"] == "camarão"
+
+            # E a tela de ativação não deve aparecer de novo.
+            assert auth.conta_legada_id() is None
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+# ===========================================================================
 # EXECUÇÃO SEM PYTEST: roda tudo com asserts e conta os resultados.
 # (Permite "python test_basico.py" mesmo sem o pytest instalado.)
 # ===========================================================================

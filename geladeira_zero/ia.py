@@ -140,7 +140,7 @@ def receita_generica(ingredientes):
 # ---------------------------------------------------------------------------
 # 5) LIVRO DE RECEITAS — histórico permanente do que já foi visualizado
 # ---------------------------------------------------------------------------
-def registrar_no_livro(receita, origem, ingredientes):
+def registrar_no_livro(receita, origem, ingredientes, usuario_id=config.USUARIO_PADRAO_ID):
     """
     Guarda a receita no livro (data/livro_receitas.json) — um histórico
     PERMANENTE de tudo que o usuário já visualizou, para poder refazer.
@@ -153,7 +153,7 @@ def registrar_no_livro(receita, origem, ingredientes):
     de chegar ao usuário.
     """
     try:
-        livro = persistencia.carregar_livro()
+        livro = persistencia.carregar_livro(usuario_id)
         chave = chave_cache(ingredientes)
         agora = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -162,7 +162,7 @@ def registrar_no_livro(receita, origem, ingredientes):
                     and registro.get("chave") == chave):
                 registro["vezes"] = registro.get("vezes", 1) + 1
                 registro["visto_em"] = agora
-                persistencia.salvar_livro(livro)
+                persistencia.salvar_livro(livro, usuario_id)
                 return
 
         livro.append({
@@ -176,28 +176,28 @@ def registrar_no_livro(receita, origem, ingredientes):
             "visto_em": agora,
             "vezes": 1,
         })
-        persistencia.salvar_livro(livro)
+        persistencia.salvar_livro(livro, usuario_id)
     except Exception as erro:
         print(f"[DEBUG] Falha ao registrar no livro: {repr(erro)}")
 
 
-def listar_livro():
-    """Devolve todas as receitas do livro (lista de dicionários)."""
-    return persistencia.carregar_livro()
+def listar_livro(usuario_id=config.USUARIO_PADRAO_ID):
+    """Devolve todas as receitas do livro DESTE usuário (lista de dicionários)."""
+    return persistencia.carregar_livro(usuario_id)
 
 
-def remover_do_livro(indice):
-    """Remove a receita na posição `indice` do livro e salva."""
-    livro = persistencia.carregar_livro()
+def remover_do_livro(indice, usuario_id=config.USUARIO_PADRAO_ID):
+    """Remove a receita na posição `indice` do livro deste usuário e salva."""
+    livro = persistencia.carregar_livro(usuario_id)
     if 0 <= indice < len(livro):
         livro.pop(indice)
-        persistencia.salvar_livro(livro)
+        persistencia.salvar_livro(livro, usuario_id)
 
 
 # ---------------------------------------------------------------------------
 # FUNÇÃO PRINCIPAL DO MÓDULO — orquestra tudo com fallback
 # ---------------------------------------------------------------------------
-def sugerir_receita(inventario, usuario, ingredientes=None):
+def sugerir_receita(inventario, usuario, ingredientes=None, usuario_id=config.USUARIO_PADRAO_ID):
     """
     Devolve (receita, origem). origem indica de onde veio: "ia", "cache"
     ou "generica". O programa NUNCA trava: try/except garante o plano B.
@@ -218,7 +218,7 @@ def sugerir_receita(inventario, usuario, ingredientes=None):
         # Deu certo: guarda no cache para uso offline futuro.
         cache[chave] = receita
         persistencia.salvar_cache(cache)
-        registrar_no_livro(receita, "ia", ingredientes)
+        registrar_no_livro(receita, "ia", ingredientes, usuario_id)
         return receita, "ia"
     except Exception as erro:
         # Qualquer falha (sem chave, sem internet, timeout, erro HTTP...)
@@ -227,8 +227,8 @@ def sugerir_receita(inventario, usuario, ingredientes=None):
         print(f"[DEBUG] Falha na IA: {repr(erro)}")
         # Plano B:
         if chave in cache:
-            registrar_no_livro(cache[chave], "cache", ingredientes)
+            registrar_no_livro(cache[chave], "cache", ingredientes, usuario_id)
             return cache[chave], "cache"
         receita = receita_generica(ingredientes)
-        registrar_no_livro(receita, "generica", ingredientes)
+        registrar_no_livro(receita, "generica", ingredientes, usuario_id)
         return receita, "generica"

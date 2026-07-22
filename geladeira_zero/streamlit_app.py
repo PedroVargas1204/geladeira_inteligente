@@ -28,6 +28,7 @@ import pandas as pd
 import streamlit as st
 
 import config
+import login_ui
 import persistencia
 import inventario as inv
 import alertas
@@ -75,14 +76,14 @@ def data_hora_br(texto_iso):
 # ---------------------------------------------------------------------------
 # ESTADO: carregar do disco e salvar de volta
 # ---------------------------------------------------------------------------
-def carregar_estado():
-    """Lê o banco de dados e devolve todo o estado (igual ao main.carregar_tudo)."""
-    return persistencia.carregar_estado()
+def carregar_estado(usuario_id):
+    """Lê o banco e devolve todo o estado DESTE usuário."""
+    return persistencia.carregar_estado(usuario_id)
 
 
-def salvar_estado(estado):
-    """Grava inventário, histórico e usuário no banco, em uma transação."""
-    persistencia.salvar_estado(estado)
+def salvar_estado(estado, usuario_id):
+    """Grava inventário, histórico e perfil DESTE usuário, em uma transação."""
+    persistencia.salvar_estado(estado, usuario_id)
 
 
 def impacto_seguro(historico, base):
@@ -103,24 +104,41 @@ def avisar(mensagem, icone="✅"):
     st.session_state["flash"] = (mensagem, icone)
 
 
-# Carregamos do disco a cada execução. Protegido para mostrar erro amigável.
-try:
-    estado = carregar_estado()
-except Exception as e:
-    st.error(f"Erro ao ler os arquivos de dados: {e}")
-    st.stop()
-
-
 # ---------------------------------------------------------------------------
-# CONFIGURAÇÃO DA PÁGINA + BARRA LATERAL
+# CONFIGURAÇÃO DA PÁGINA
 # ---------------------------------------------------------------------------
+# Precisa ser o PRIMEIRO comando Streamlit da execução — inclusive antes de
+# qualquer st.error() —, senão o Streamlit reclama.
 st.set_page_config(page_title="Geladeira Zero", page_icon="🧊", layout="wide")
+
+# ---------------------------------------------------------------------------
+# LOGIN: o porteiro do app
+# ---------------------------------------------------------------------------
+# Se ninguém estiver logado nesta sessão, exigir_login() desenha a tela de
+# entrada e interrompe a execução aqui — nada abaixo chega a rodar.
+USUARIO_ID = login_ui.exigir_login()
+
+# Daqui para baixo, TODOS os dados são lidos e gravados no escopo de
+# USUARIO_ID: cada conta enxerga apenas a própria geladeira.
+try:
+    estado = carregar_estado(USUARIO_ID)
+except Exception as e:
+    st.error(f"Erro ao ler os dados: {e}")
+    st.stop()
 # ---------------------------------------------------------------------------
 # CORES CUSTOMIZADAS (sidebar e bordas dos inputs)
 # ---------------------------------------------------------------------------
 COR_SIDEBAR = "#34362F"         # ← FUNDO da barra lateral
 COR_TEXTO_SIDEBAR = "#EDF8F2"   # ← TEXTO da barra lateral
 COR_BORDA = "#B8C4A9"           # borda dos inputs
+
+# ← CORES DO BOTÃO "SAIR" (barra lateral). Mexa só aqui para trocar o visual.
+BTN_FUNDO = "#3F4438"           # fundo normal
+BTN_TEXTO = "#EDF8F2"           # texto normal
+BTN_BORDA = "#6B7A5C"           # borda normal
+BTN_FUNDO_HOVER = "#557A46"     # fundo ao passar o mouse
+BTN_TEXTO_HOVER = "#ACC092"     # texto ao passar o mouse
+BTN_BORDA_HOVER = "#E7F3E0"     # borda ao passar o mouse
 
 st.markdown(
     f"""
@@ -147,6 +165,35 @@ st.markdown(
     div[data-baseweb="input"]:focus-within,
     div[data-baseweb="select"] > div:hover {{
         border-color: #557A46 !important;
+    }}
+
+    /* ----- BOTÃO "SAIR" (e qualquer botão da barra lateral) ----- */
+    /* Os dois seletores cobrem versões diferentes do Streamlit. */
+    section[data-testid="stSidebar"] .stButton > button,
+    section[data-testid="stSidebar"] button[data-testid^="stBaseButton"] {{
+        background-color: {BTN_FUNDO} !important;
+        color: {BTN_TEXTO} !important;
+        border: 1px solid {BTN_BORDA} !important;
+        border-radius: 8px;
+        font-weight: 500;
+        /* transition = a mudança acontece suave, não em um salto seco */
+        transition: background-color .18s ease, border-color .18s ease,
+                    color .18s ease, transform .18s ease;
+    }}
+
+    /* :hover = enquanto o mouse está em cima */
+    section[data-testid="stSidebar"] .stButton > button:hover,
+    section[data-testid="stSidebar"] button[data-testid^="stBaseButton"]:hover {{
+        background-color: {BTN_FUNDO_HOVER} !important;
+        color: {BTN_TEXTO_HOVER} !important;
+        border-color: {BTN_BORDA_HOVER} !important;
+        transform: translateY(-1px);   /* sobe 1px: dá sensação de relevo */
+    }}
+
+    /* :active = no instante do clique (afunda de volta) */
+    section[data-testid="stSidebar"] .stButton > button:active,
+    section[data-testid="stSidebar"] button[data-testid^="stBaseButton"]:active {{
+        transform: translateY(0);
     }}
     </style>
     """,
@@ -202,6 +249,7 @@ with st.sidebar:
     st.divider()
     pagina = st.radio("Navegação", PAGINAS, key="nav", label_visibility="collapsed")
     st.divider()
+    login_ui.bloco_conta(USUARIO_ID)
     st.caption("♻️ Menos desperdício, mais sabor.")
 
 
@@ -388,7 +436,7 @@ elif pagina == "➕ Adicionar item":
                 "data_validade": validade_prevista,
             }
             inv.adicionar_item(estado["inventario"], item)
-            salvar_estado(estado)
+            salvar_estado(estado, USUARIO_ID)
             avisar(f"{nome} adicionado! Vence em "
                    f"{data_br(validade_prevista)}.", "🧊")
             st.rerun()
@@ -469,14 +517,14 @@ elif pagina == "✅ Consumir / Descartar":
         if col1.button("✅ Consumido", type="primary", width="stretch"):
             inv.marcar_consumido(estado["inventario"], estado["historico"],
                                  indice, estado["base"], qtd)
-            salvar_estado(estado)
+            salvar_estado(estado, USUARIO_ID)
             avisar(f"{qtd}{unidade} de {item_sel['nome']} consumido(s). "
                    "Desperdício evitado! 🌱", "✅")
             st.rerun()
         if col2.button("🗑️ Descartado", width="stretch"):
             inv.marcar_descartado(estado["inventario"], estado["historico"],
                                   indice, estado["base"], qtd)
-            salvar_estado(estado)
+            salvar_estado(estado, USUARIO_ID)
             avisar(f"{qtd}{unidade} de {item_sel['nome']} descartado(s).", "🗑️")
             st.rerun()
 
@@ -542,7 +590,7 @@ elif pagina == "🍳 Sugerir receita":
                 try:
                     receita, origem = ia.sugerir_receita(
                         estado["inventario"], estado["usuario"],
-                        ingredientes=ingredientes)
+                        ingredientes=ingredientes, usuario_id=USUARIO_ID)
                     # Guardamos na sessão: a receita continua na tela
                     # mesmo depois de outros cliques/reruns.
                     st.session_state["ultima_receita"] = (receita, origem)
@@ -584,7 +632,7 @@ elif pagina == "📖 Livro de receitas":
     st.caption("Todas as receitas que você já visualizou, guardadas para "
                "refazer quando bater a fome de novo.")
 
-    livro = ia.listar_livro()
+    livro = ia.listar_livro(USUARIO_ID)
     if not livro:
         st.info("Seu livro ainda está vazio. Gere uma receita em "
                 "🍳 Sugerir receita e ela aparece aqui automaticamente.")
@@ -629,7 +677,7 @@ elif pagina == "📖 Livro de receitas":
                         st.markdown(f"**{i}.** {passo}")
 
                 if st.button("🗑️ Remover do livro", key=f"remover_{indice}"):
-                    ia.remover_do_livro(indice)
+                    ia.remover_do_livro(indice, USUARIO_ID)
                     avisar("Receita removida do livro.", "🗑️")
                     st.rerun()
 
@@ -758,7 +806,7 @@ elif pagina == "⚙️ Configurações":
         u["vegano"] = vegano
         u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
         u["tempo_max_receita"] = tempo
-        salvar_estado(estado)
+        salvar_estado(estado, USUARIO_ID)
         avisar("Preferências salvas!", "⚙️")
         st.rerun()
 
