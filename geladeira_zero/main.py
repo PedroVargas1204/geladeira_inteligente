@@ -19,11 +19,8 @@ import config
 import operacoes
 import persistencia
 import interface
-import inventario as inv
-import alertas
-import ia
-import impacto
-
+from regras import inventario as inv
+from regras import alertas, ia, impacto
 
 # ---------------------------------------------------------------------------
 # CARREGAR / SALVAR TODO O ESTADO

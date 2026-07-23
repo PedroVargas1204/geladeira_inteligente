@@ -41,7 +41,7 @@ from datetime import datetime
 from sqlalchemy import select
 
 import db
-import inventario as inv
+from regras import inventario as inv
 
 
 class ItemNaoEncontrado(Exception):

@@ -20,7 +20,7 @@ IMPORTANTE para o futuro multi-usuário: todas as tabelas de dados pessoais
 existe o usuário 1 (config.USUARIO_PADRAO_ID), mas o terreno está preparado.
 """
 
-from sqlalchemy import ForeignKey, String, create_engine
+from sqlalchemy import ForeignKey, String, create_engine, inspect
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 from sqlalchemy.types import JSON
 
@@ -141,17 +141,26 @@ def obter_engine():
     """Devolve o engine global, criando-o (e as tabelas) na primeira vez."""
     global _engine
     if _engine is None:
-        _engine = criar_engine(config.ARQ_BANCO)
+        _engine = criar_engine(config.url_do_banco())
     return _engine
 
 
-def criar_engine(caminho_arquivo):
+def criar_engine(destino):
     """
-    Cria um engine SQLite apontando para `caminho_arquivo` e garante que
-    todas as tabelas existem. Separado de obter_engine() para os TESTES
-    poderem usar um banco temporário sem tocar no banco real.
+    Cria o engine e garante que todas as tabelas existem.
+
+    `destino` aceita duas formas:
+      - uma URL do SQLAlchemy ("postgresql+psycopg://..." ou "sqlite:///...");
+      - um caminho de arquivo, que vira SQLite (usado pelos TESTES, que
+        trabalham com um banco temporário para não tocar no banco real).
     """
-    engine = create_engine(f"sqlite:///{caminho_arquivo}")
+    url = destino if "://" in str(destino) else f"sqlite:///{destino}"
+
+    # pool_pre_ping testa a conexão antes de usá-la. É indispensável com o
+    # Neon: ele desliga o banco quando ninguém acessa, e sem esse teste a
+    # primeira consulta depois da soneca falharia com "connection closed".
+    engine = create_engine(url, pool_pre_ping=True)
+
     Base.metadata.create_all(engine)
     _migrar_colunas_novas(engine)
     return engine
@@ -170,6 +179,10 @@ def _migrar_colunas_novas(engine):
     Esta função compara as colunas que existem no banco com as que o modelo
     espera e adiciona as que faltam com ALTER TABLE. É segura para rodar
     sempre: se não falta nada, não faz nada.
+
+    Funciona tanto no SQLite quanto no PostgreSQL: a lista de colunas vem
+    do `inspect()` do SQLAlchemy, que fala a língua de cada banco, em vez
+    de um comando específico como o PRAGMA do SQLite.
     """
     novas = {
         "usuarios": {
@@ -178,23 +191,22 @@ def _migrar_colunas_novas(engine):
         },
     }
 
+    inspetor = inspect(engine)
+
     with engine.begin() as conexao:
         for tabela, colunas in novas.items():
-            # PRAGMA table_info devolve uma linha por coluna existente.
-            existentes = {
-                linha[1]
-                for linha in conexao.exec_driver_sql(
-                    f"PRAGMA table_info({tabela})"
-                ).fetchall()
-            }
+            if not inspetor.has_table(tabela):
+                continue  # create_all() já criou completa; nada a migrar.
+            existentes = {c["name"] for c in inspetor.get_columns(tabela)}
             for coluna, tipo in colunas.items():
                 if coluna not in existentes:
                     conexao.exec_driver_sql(
                         f"ALTER TABLE {tabela} ADD COLUMN {coluna} {tipo}"
                     )
 
-        # O SQLite não aceita ADD COLUMN com UNIQUE embutido, então a
-        # unicidade do e-mail é garantida por um índice criado à parte.
+        # ADD COLUMN não aceita UNIQUE embutido, então a unicidade do e-mail
+        # é garantida por um índice à parte. A sintaxe abaixo é aceita pelos
+        # dois bancos.
         conexao.exec_driver_sql(
             "CREATE UNIQUE INDEX IF NOT EXISTS ix_usuarios_email "
             "ON usuarios (email)"

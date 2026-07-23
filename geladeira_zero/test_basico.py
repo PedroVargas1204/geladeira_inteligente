@@ -20,10 +20,9 @@ COMO RODAR:
 from datetime import datetime, timedelta
 
 import config
-import impacto
-import inventario as inv
-import alertas
-import ia
+from regras import impacto
+from regras import inventario as inv
+from regras import alertas, ia
 import persistencia
 
 

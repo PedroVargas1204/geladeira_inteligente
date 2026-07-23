@@ -23,6 +23,43 @@ PASTA_DADOS = os.path.join(PASTA_BASE, "data")
 # O BANCO DE DADOS (SQLite): um único arquivo com todas as tabelas.
 ARQ_BANCO = os.path.join(PASTA_DADOS, "geladeira.db")
 
+
+def url_do_banco():
+    """
+    Descobre a QUAL banco conectar.
+
+    - Se a variável de ambiente DATABASE_URL existir, usa ela: é assim que
+      o app em produção aponta para o PostgreSQL hospedado (Neon).
+    - Se não existir, cai no SQLite local. Assim, desenvolver na sua
+      máquina continua funcionando sem configurar nada.
+
+    A senha do banco NUNCA fica no código: vive na variável de ambiente
+    (ou nos "secrets" do Streamlit Cloud), fora do controle de versão.
+    """
+    url = os.environ.get("DATABASE_URL", "").strip()
+
+    if not url:
+        # No Streamlit Cloud os segredos também chegam por st.secrets.
+        # O try protege quem roda pela CLI, sem Streamlit carregado.
+        try:
+            import streamlit as st
+
+            url = str(st.secrets.get("DATABASE_URL", "")).strip()
+        except Exception:
+            url = ""
+
+    if not url:
+        return f"sqlite:///{ARQ_BANCO}"
+
+    # O Neon entrega a string começando com "postgresql://". O SQLAlchemy
+    # precisa saber QUAL driver usar, por isso trocamos para o psycopg 3.
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg://", 1)
+
+    return url
+
 # Enquanto o app não tem login, todo dado pertence a este usuário.
 # Quando o multi-usuário chegar, este valor virá da sessão de login.
 USUARIO_PADRAO_ID = 1

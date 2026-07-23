@@ -14,7 +14,7 @@ from datetime import datetime
 
 import config
 import persistencia
-import alertas
+from regras import alertas
 
 # requests é uma biblioteca externa (HTTP). Importamos com try para o
 # programa não quebrar caso ela não esteja instalada — cairíamos no fallback.

@@ -31,11 +31,8 @@ import config
 import login_ui
 import operacoes
 import persistencia
-import inventario as inv
-import alertas
-import ia
-import impacto
-import saude
+from regras import inventario as inv
+from regras import alertas,ia,impacto
 
 
 # Unidades aceitas pelo converter_para_kg() do impacto.py.
