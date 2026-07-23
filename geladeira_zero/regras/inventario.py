@@ -14,7 +14,7 @@ Responsável (slides): Pessoa B
 from datetime import datetime, timedelta
 
 import config
-import persistencia
+from banco import persistencia
 
 
 # ---------------------------------------------------------------------------

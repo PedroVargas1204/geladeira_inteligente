@@ -17,8 +17,8 @@ import json
 import os
 
 import config
-import db
-import persistencia
+from banco import db
+from banco import persistencia
 
 
 def ler_json(caminho, padrao):

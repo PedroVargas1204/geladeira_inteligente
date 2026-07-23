@@ -20,7 +20,7 @@ Assim ele serve às duas interfaces (e a uma API, no futuro).
 import bcrypt
 from sqlalchemy import func, select
 
-import db
+from banco import db
 
 
 # ---------------------------------------------------------------------------

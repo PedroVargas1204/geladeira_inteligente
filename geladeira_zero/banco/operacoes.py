@@ -40,7 +40,7 @@ from datetime import datetime
 
 from sqlalchemy import select
 
-import db
+from banco import db
 from regras import inventario as inv
 
 

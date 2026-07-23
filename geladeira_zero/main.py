@@ -16,9 +16,9 @@ Responsável (slides): Pessoa A
 from datetime import datetime
 
 import config
-import operacoes
-import persistencia
-import interface
+from banco import operacoes
+from banco import persistencia
+from ui import login_ui
 from regras import inventario as inv
 from regras import alertas, ia, impacto
 

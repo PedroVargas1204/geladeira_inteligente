@@ -21,7 +21,7 @@ import json
 from sqlalchemy import delete, select
 
 import config
-import db
+from banco import db
 
 
 # ---------------------------------------------------------------------------

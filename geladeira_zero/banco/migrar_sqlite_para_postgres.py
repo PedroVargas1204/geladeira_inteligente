@@ -32,7 +32,7 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
 
 import config
-import db
+from banco import db
 
 
 # Tabelas na ordem em que devem ser copiadas: usuários primeiro, porque as

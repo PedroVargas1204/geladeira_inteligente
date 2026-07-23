@@ -12,7 +12,7 @@ Responsável (slides): Pessoa D
 """
 
 import config
-import persistencia
+from banco import persistencia
 
 
 # ---------------------------------------------------------------------------

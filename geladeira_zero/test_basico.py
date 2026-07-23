@@ -23,7 +23,7 @@ import config
 from regras import impacto
 from regras import inventario as inv
 from regras import alertas, ia
-import persistencia
+from banco import persistencia
 
 
 # ===========================================================================
@@ -240,7 +240,7 @@ def test_estado_ida_e_volta_no_banco():
     import os
     import tempfile
 
-    import db
+    from banco import db 
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = db.criar_engine(os.path.join(pasta, "teste.db"))
@@ -281,8 +281,8 @@ def test_autenticacao_cadastro_e_login():
     import os
     import tempfile
 
-    import auth
-    import db
+    from banco import auth
+    from banco import db
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = db.criar_engine(os.path.join(pasta, "auth.db"))
@@ -327,8 +327,8 @@ def test_senha_curta_e_email_invalido_sao_recusados():
     import os
     import tempfile
 
-    import auth
-    import db
+    from banco import auth
+    from banco import db
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = db.criar_engine(os.path.join(pasta, "auth2.db"))
@@ -353,8 +353,8 @@ def test_dados_isolados_entre_usuarios():
     import os
     import tempfile
 
-    import auth
-    import db
+    from banco import auth
+    from banco import db
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = db.criar_engine(os.path.join(pasta, "multi.db"))
@@ -404,8 +404,8 @@ def test_conta_antiga_ganha_login_sem_perder_dados():
     import os
     import tempfile
 
-    import auth
-    import db
+    from banco import auth
+    from banco import db
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = db.criar_engine(os.path.join(pasta, "legado.db"))
@@ -445,7 +445,7 @@ def test_conta_antiga_ganha_login_sem_perder_dados():
 # ===========================================================================
 def _banco_temporario(pasta, nome):
     """Prepara um banco vazio e devolve (engine, base_de_alimentos)."""
-    import db
+    from banco import db
 
     engine = db.criar_engine(f"{pasta}/{nome}")
     db.usar_engine(engine)
@@ -464,9 +464,9 @@ def test_duas_gravacoes_simultaneas_nao_se_apagam():
     # itens sobrevivem.
     import tempfile
 
-    import auth
-    import db
-    import operacoes
+    from banco import auth
+    from banco import db
+    from banco import operacoes
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = _banco_temporario(pasta, "conc.db")
@@ -490,9 +490,9 @@ def test_duas_gravacoes_simultaneas_nao_se_apagam():
 def test_consumo_parcial_e_total_pelo_banco():
     import tempfile
 
-    import auth
-    import db
-    import operacoes
+    from banco import auth
+    from banco import db
+    from banco import operacoes
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = _banco_temporario(pasta, "consumo.db")
@@ -530,9 +530,9 @@ def test_usuario_nao_altera_item_de_outro():
     # Proteção importante: passar o id de um item alheio não pode funcionar.
     import tempfile
 
-    import auth
-    import db
-    import operacoes
+    from banco import auth
+    from banco import db
+    from banco import operacoes
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = _banco_temporario(pasta, "seguranca.db")
@@ -560,9 +560,9 @@ def test_usuario_nao_altera_item_de_outro():
 def test_salvar_perfil_nao_toca_no_inventario():
     import tempfile
 
-    import auth
-    import db
-    import operacoes
+    from banco import auth
+    from banco import db
+    from banco import operacoes
 
     with tempfile.TemporaryDirectory() as pasta:
         engine_teste = _banco_temporario(pasta, "perfil.db")

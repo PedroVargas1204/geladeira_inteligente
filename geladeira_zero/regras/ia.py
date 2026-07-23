@@ -13,7 +13,7 @@ import json
 from datetime import datetime
 
 import config
-import persistencia
+from banco import persistencia
 from regras import alertas
 
 # requests é uma biblioteca externa (HTTP). Importamos com try para o

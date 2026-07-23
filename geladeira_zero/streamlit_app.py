@@ -28,11 +28,10 @@ import pandas as pd
 import streamlit as st
 
 import config
-import login_ui
-import operacoes
-import persistencia
+from banco import operacoes, persistencia
 from regras import inventario as inv
-from regras import alertas,ia,impacto
+from regras import alertas, ia, impacto, saude
+from ui import interface, login_ui
 
 
 # Unidades aceitas pelo converter_para_kg() do impacto.py.

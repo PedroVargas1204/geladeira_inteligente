@@ -16,7 +16,7 @@ entrou. Fechar a aba encerra a sessão.
 
 import streamlit as st
 
-import auth
+from banco import auth
 
 
 # Chave usada no st.session_state. Constante para não errar de digitação.
