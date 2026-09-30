@@ -97,7 +97,7 @@ def _formulario_entrar():
     with st.form("form_entrar"):
         email = st.text_input("E-mail", placeholder="voce@email.com")
         senha = st.text_input("Senha", type="password")
-        enviou = st.form_submit_button("Entrar", use_container_width=True)
+        enviou = st.form_submit_button("Entrar", width="stretch")
 
     if enviou:
         try:

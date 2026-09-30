@@ -1,16 +1,11 @@
 """
 main.py
 =======
-PONTO DE ENTRADA do programa (RF01). Amarra tudo:
-- carrega os 5 JSON do disco;
-- mostra o menu num laço;
+Versão de terminal (CLI) do app, sem login: opera sempre no usuário
+config.USUARIO_PADRAO_ID.
+- relê o banco a cada volta do menu, para mostrar o que a última ação gravou;
 - roteia cada opção para a função certa;
-- salva o estado a cada ação (RNF04).
-
-Baixo acoplamento: main só CHAMA funções dos módulos, sem conhecer seus
-detalhes internos.
-
-Responsável (slides): Pessoa A
+- cada ação grava só o que mudou, via operacoes.py.
 """
 
 from datetime import datetime
@@ -18,7 +13,7 @@ from datetime import datetime
 import config
 from banco import operacoes
 from banco import persistencia
-from ui import login_ui
+from ui import interface
 from regras import inventario as inv
 from regras import alertas, ia, impacto
 
@@ -48,7 +43,8 @@ def acao_adicionar(estado):
         return
 
     quantidade = interface.ler_float("Quantidade: ", minimo=0.01)
-    unidade = interface.ler_texto("Unidade (kg/g/l/ml/unid): ").lower()
+    print(f"Unidades válidas: {', '.join(config.UNIDADES_VALIDAS)}")
+    unidade = interface.ler_opcao("Unidade: ", config.UNIDADES_VALIDAS)
     print(f"Locais válidos: {', '.join(config.LOCAIS_VALIDOS)}")
     local = interface.ler_opcao("Local: ", config.LOCAIS_VALIDOS)
     data_compra = interface.ler_data("Data de compra")
@@ -253,7 +249,6 @@ def desenhar_cabecalho(estado):
 # LAÇO PRINCIPAL
 # ---------------------------------------------------------------------------
 def main():
-    estado = carregar_tudo()
 
     # Mapa: opção -> função. Alternativa elegante ao if/elif gigante.
     acoes = {
@@ -268,6 +263,9 @@ def main():
     }
 
     while True:
+        # Relê do banco a cada volta: as ações gravam direto via `operacoes`,
+        # então o que está em memória fica desatualizado depois de cada uma.
+        estado = carregar_tudo()
         interface.limpar_tela()
         desenhar_cabecalho(estado)
         print("\n[1] Adicionar item        [2] Ver inventário")

@@ -31,11 +31,10 @@ import config
 from banco import operacoes, persistencia
 from regras import inventario as inv
 from regras import alertas, ia, impacto, saude
-from ui import interface, login_ui
+from ui import login_ui
 
 
-# Unidades aceitas pelo converter_para_kg() do impacto.py.
-UNIDADES_VALIDAS = ["kg", "g", "l", "ml", "unid"]
+
 
 EMOJI_LOCAL = {"geladeira": "🧊", "despensa": "🗄️", "freezer": "❄️"}
 
@@ -376,7 +375,7 @@ elif pagina == "➕ Adicionar item":
         # quantidade se adapta a ela: unidades inteiras sobem de 1 em 1,
         # gramas de 50 em 50, quilos de 0,25 em 0,25. Menos digitação.
         unidade = st.radio(
-            "Como você mede esse item?",
+            config.UNIDADES_VALIDAS,
             ["unid", "kg", "g", "l", "ml"],
             horizontal=True,
             format_func=lambda u: ROTULO_UNIDADE.get(u, u),

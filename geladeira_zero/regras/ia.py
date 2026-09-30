@@ -10,9 +10,14 @@ receita — mesmo sem internet ou sem chave de API.
 
 import os
 import json
+import logging
 
 import config
 from banco import operacoes, persistencia
+
+# Avisos vão para o log (terminal local ou "Manage app > Logs" no Streamlit
+# Cloud), e não para a tela do usuário.
+log = logging.getLogger(__name__)
 from regras import alertas
 
 # requests é uma biblioteca externa (HTTP). Importamos com try para o
@@ -160,7 +165,7 @@ def registrar_no_livro(receita, origem, ingredientes, usuario_id=config.USUARIO_
     try:
         operacoes.registrar_receita(usuario_id, registro)
     except Exception as erro:
-        print(f"[DEBUG] Falha ao registrar no livro: {repr(erro)}")
+        log.warning("Falha ao registrar no livro: %r", erro)
 
 
 def listar_livro(usuario_id=config.USUARIO_PADRAO_ID):
@@ -173,8 +178,7 @@ def _guardar_no_cache(chave, receita):
     try:
         operacoes.salvar_no_cache(chave, receita)
     except Exception as erro:
-        print(f"[DEBUG] Falha ao gravar no cache: {repr(erro)}")
-
+        log.warning("Falha ao gravar no cache: %r", erro)
 
 # ---------------------------------------------------------------------------
 # FUNÇÃO PRINCIPAL DO MÓDULO — orquestra tudo com fallback
@@ -198,7 +202,7 @@ def sugerir_receita(inventario, usuario, ingredientes=None, usuario_id=config.US
         receita = consultar_ia(montar_prompt(ingredientes, usuario))
     except Exception as erro:
         # Sem chave, sem internet, timeout, erro HTTP... cai no plano B.
-        print(f"[DEBUG] Falha na IA: {repr(erro)}")
+        log.warning("IA indisponível, usando o plano B: %r", erro)
         receita = persistencia.buscar_no_cache(chave)
         origem = "cache"
         if receita is None:

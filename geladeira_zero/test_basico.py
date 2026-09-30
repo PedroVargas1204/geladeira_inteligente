@@ -874,6 +874,33 @@ def test_livro_remove_a_receita_do_botao_clicado():
             engine_teste.dispose()
             db.usar_engine(None)
 
+
+# ===========================================================================
+# main.py — CLI (o teclado é simulado trocando os leitores da interface)
+# ===========================================================================
+def test_cli_abre_e_recarrega_o_estado_a_cada_volta_do_menu():
+    """A CLI desenha o menu e relê o banco antes de cada volta (opção 2, depois 0)."""
+    import main
+    from ui import interface
+
+    estado_vazio = {"base": {}, "inventario": [], "historico": [], "usuario": {}}
+    leituras = []
+    respostas = iter(["2", "0"])
+
+    originais = (main.carregar_tudo, interface.ler_opcao,
+                 interface.limpar_tela, interface.pausar)
+    main.carregar_tudo = lambda: leituras.append(1) or estado_vazio
+    interface.ler_opcao = lambda *args, **kwargs: next(respostas)
+    interface.limpar_tela = lambda: None
+    interface.pausar = lambda: None
+    try:
+        main.main()
+    finally:
+        (main.carregar_tudo, interface.ler_opcao,
+         interface.limpar_tela, interface.pausar) = originais
+
+    assert len(leituras) == 2
+
 # ===========================================================================
 # EXECUÇÃO SEM PYTEST: roda tudo com asserts e conta os resultados.
 # (Permite "python test_basico.py" mesmo sem o pytest instalado.)
