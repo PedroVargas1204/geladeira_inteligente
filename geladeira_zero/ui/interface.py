@@ -9,7 +9,7 @@ A "casca" do programa em modo texto (CLI). Duas responsabilidades:
 Além disso, os leitores entendem a tecla ESC: apertá-la em qualquer campo
 aborta a operação atual e volta ao menu (capturado lá no main.py).
 
-Responsável (slides): Pessoa A
+
 """
 
 import os

@@ -8,7 +8,7 @@ A partir do histórico de itens CONSUMIDOS (aproveitados no prazo), calcula:
 - dinheiro poupado (R$).
 Também agrega por categoria e calcula a taxa de aproveitamento. (RF08 + RF09)
 
-Responsável (slides): Pessoa D
+
 """
 
 import config

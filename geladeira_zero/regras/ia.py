@@ -5,7 +5,7 @@ A camada criativa (RF06) + plano B (RNF05). Pega o que está para vencer,
 monta um pedido para a IA, chama a API com segurança e SEMPRE devolve uma
 receita — mesmo sem internet ou sem chave de API.
 
-Responsável (slides): Pessoa C
+
 """
 
 import os

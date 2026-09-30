@@ -4,7 +4,7 @@ alertas.py
 Gera os alertas de vencimento (RF05, slide 6). Olha o inventário e descobre
 quais itens vencem em DIAS_ALERTA dias ou menos.
 
-Responsável (slides): Pessoa B
+
 """
 
 from datetime import datetime

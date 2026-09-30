@@ -8,7 +8,7 @@ O miolo do produto. Cuida do estoque:
 - mover itens para o histórico quando consumidos ou descartados,
   agora com suporte a CONSUMO PARCIAL (consumir só parte da quantidade).
 
-Responsável (slides): Pessoa B
+
 """
 
 from datetime import datetime, timedelta

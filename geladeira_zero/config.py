@@ -5,7 +5,7 @@ Centraliza TODAS as constantes do projeto (os "números mágicos") e os
 caminhos dos arquivos de dados. Nenhum outro módulo deve inventar esses
 valores: todos importam daqui. Assim, mudar uma regra é mudar UM lugar só.
 
-Responsável (slides): Pessoa D
+
 """
 
 import os
