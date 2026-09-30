@@ -8,8 +8,6 @@ config.USUARIO_PADRAO_ID.
 - cada ação grava só o que mudou, via operacoes.py.
 """
 
-from datetime import datetime
-
 import config
 from banco import operacoes
 from banco import persistencia
