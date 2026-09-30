@@ -375,6 +375,7 @@ elif pagina == "➕ Adicionar item":
         # quantidade se adapta a ela: unidades inteiras sobem de 1 em 1,
         # gramas de 50 em 50, quilos de 0,25 em 0,25. Menos digitação.
         unidade = st.radio(
+            "Como você mede esse item?",
             config.UNIDADES_VALIDAS,
             horizontal=True,
             format_func=lambda u: ROTULO_UNIDADE.get(u, u),
