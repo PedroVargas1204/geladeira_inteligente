@@ -376,7 +376,6 @@ elif pagina == "➕ Adicionar item":
         # gramas de 50 em 50, quilos de 0,25 em 0,25. Menos digitação.
         unidade = st.radio(
             config.UNIDADES_VALIDAS,
-            ["unid", "kg", "g", "l", "ml"],
             horizontal=True,
             format_func=lambda u: ROTULO_UNIDADE.get(u, u),
         )

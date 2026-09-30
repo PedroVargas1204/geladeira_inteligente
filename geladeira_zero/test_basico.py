@@ -874,6 +874,32 @@ def test_livro_remove_a_receita_do_botao_clicado():
             engine_teste.dispose()
             db.usar_engine(None)
 
+def test_adicionar_item_abre_com_as_unidades_certas():
+    """A página Adicionar item abre sem erro e oferece as unidades do config."""
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_adicionar.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.session_state["usuario_id"] = uid
+            tela.session_state["nav"] = "➕ Adicionar item"
+            tela.run()
+            assert not tela.exception
+
+            radio = [r for r in tela.radio if r.label == "Como você mede esse item?"]
+            assert len(radio) == 1
+            assert len(radio[0].options) == len(config.UNIDADES_VALIDAS)
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
 
 # ===========================================================================
 # main.py — CLI (o teclado é simulado trocando os leitores da interface)

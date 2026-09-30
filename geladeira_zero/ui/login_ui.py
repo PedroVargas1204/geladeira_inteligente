@@ -116,7 +116,7 @@ def _formulario_criar():
             help=f"Mínimo de {auth.SENHA_MINIMA} caracteres.",
         )
         repetir = st.text_input("Repita a senha", type="password")
-        enviou = st.form_submit_button("Criar conta", use_container_width=True)
+        enviou = st.form_submit_button("Criar conta", width="stretch"
 
     if enviou:
         if senha != repetir:
@@ -176,5 +176,5 @@ def bloco_conta(usuario_id):
     """
     conta = auth.dados_da_conta(usuario_id) or {}
     st.caption(conta.get("email", ""))
-    if st.button("Sair", use_container_width=True):
+    if st.button("Sair", width="stretch":
         sair()
