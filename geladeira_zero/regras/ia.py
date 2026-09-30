@@ -10,10 +10,9 @@ Responsável (slides): Pessoa C
 
 import os
 import json
-from datetime import datetime
 
 import config
-from banco import persistencia
+from banco import operacoes, persistencia
 from regras import alertas
 
 # requests é uma biblioteca externa (HTTP). Importamos com try para o
@@ -141,42 +140,25 @@ def receita_generica(ingredientes):
 # 5) LIVRO DE RECEITAS — histórico permanente do que já foi visualizado
 # ---------------------------------------------------------------------------
 def registrar_no_livro(receita, origem, ingredientes, usuario_id=config.USUARIO_PADRAO_ID):
-    """
-    Guarda a receita no livro (data/livro_receitas.json) — um histórico
-    PERMANENTE de tudo que o usuário já visualizou, para poder refazer.
-    Diferente do cache, que existe só para o modo offline e sobrescreve
-    por combinação de ingredientes.
+    """Guarda a receita no livro do usuário: histórico permanente para refazer.
 
-    Se a mesma receita (mesmo título + mesma combinação) já estiver no
-    livro, só incrementa o contador e atualiza a data da última vez.
-    Nunca levanta exceção: um problema aqui não pode impedir a receita
-    de chegar ao usuário.
+    Mesmo título + mesma combinação de ingredientes contam como a mesma
+    receita (só soma uma visualização). Nunca levanta exceção: falhar aqui
+    não pode impedir a receita de chegar ao usuário.
     """
+    agora = config.agora().strftime("%Y-%m-%d %H:%M")
+    registro = {
+        "titulo": receita.get("titulo", "Receita sem título"),
+        "ingredientes": receita.get("ingredientes", []),
+        "modo_preparo": receita.get("modo_preparo", []),
+        "ingredientes_usados": list(ingredientes),
+        "chave": chave_cache(ingredientes),
+        "origem": origem,
+        "criada_em": agora,
+        "visto_em": agora,
+    }
     try:
-        livro = persistencia.carregar_livro(usuario_id)
-        chave = chave_cache(ingredientes)
-        agora = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-        for registro in livro:
-            if (registro.get("titulo") == receita.get("titulo")
-                    and registro.get("chave") == chave):
-                registro["vezes"] = registro.get("vezes", 1) + 1
-                registro["visto_em"] = agora
-                persistencia.salvar_livro(livro, usuario_id)
-                return
-
-        livro.append({
-            "titulo": receita.get("titulo", "Receita sem título"),
-            "ingredientes": receita.get("ingredientes", []),
-            "modo_preparo": receita.get("modo_preparo", []),
-            "ingredientes_usados": list(ingredientes),
-            "chave": chave,
-            "origem": origem,
-            "criada_em": agora,
-            "visto_em": agora,
-            "vezes": 1,
-        })
-        persistencia.salvar_livro(livro, usuario_id)
+        operacoes.registrar_receita(usuario_id, registro)
     except Exception as erro:
         print(f"[DEBUG] Falha ao registrar no livro: {repr(erro)}")
 
@@ -186,12 +168,12 @@ def listar_livro(usuario_id=config.USUARIO_PADRAO_ID):
     return persistencia.carregar_livro(usuario_id)
 
 
-def remover_do_livro(indice, usuario_id=config.USUARIO_PADRAO_ID):
-    """Remove a receita na posição `indice` do livro deste usuário e salva."""
-    livro = persistencia.carregar_livro(usuario_id)
-    if 0 <= indice < len(livro):
-        livro.pop(indice)
-        persistencia.salvar_livro(livro, usuario_id)
+def _guardar_no_cache(chave, receita):
+    """Grava no cache global sem levantar exceção (é só um atalho offline)."""
+    try:
+        operacoes.salvar_no_cache(chave, receita)
+    except Exception as erro:
+        print(f"[DEBUG] Falha ao gravar no cache: {repr(erro)}")
 
 
 # ---------------------------------------------------------------------------
@@ -208,27 +190,23 @@ def sugerir_receita(inventario, usuario, ingredientes=None, usuario_id=config.US
     """
     if ingredientes is None:
         ingredientes = selecionar_ingredientes(inventario)
-    cache = persistencia.carregar_cache()
     chave = chave_cache(ingredientes)
 
-    # Tenta a IA primeiro.
+    # O try cobre só a chamada à IA: uma falha ao gravar no cache não pode
+    # descartar uma receita que a IA já devolveu.
     try:
-        prompt = montar_prompt(ingredientes, usuario)
-        receita = consultar_ia(prompt)
-        # Deu certo: guarda no cache para uso offline futuro.
-        cache[chave] = receita
-        persistencia.salvar_cache(cache)
-        registrar_no_livro(receita, "ia", ingredientes, usuario_id)
-        return receita, "ia"
+        receita = consultar_ia(montar_prompt(ingredientes, usuario))
     except Exception as erro:
-        # Qualquer falha (sem chave, sem internet, timeout, erro HTTP...)
-        # cai aqui. O print abaixo mostra a causa no TERMINAL para ajudar
-        # a depurar. (Pode remover depois que tudo estiver funcionando.)
+        # Sem chave, sem internet, timeout, erro HTTP... cai no plano B.
         print(f"[DEBUG] Falha na IA: {repr(erro)}")
-        # Plano B:
-        if chave in cache:
-            registrar_no_livro(cache[chave], "cache", ingredientes, usuario_id)
-            return cache[chave], "cache"
-        receita = receita_generica(ingredientes)
-        registrar_no_livro(receita, "generica", ingredientes, usuario_id)
-        return receita, "generica"
+        receita = persistencia.buscar_no_cache(chave)
+        origem = "cache"
+        if receita is None:
+            receita = receita_generica(ingredientes)
+            origem = "generica"
+    else:
+        origem = "ia"
+        _guardar_no_cache(chave, receita)
+
+    registrar_no_livro(receita, origem, ingredientes, usuario_id)
+    return receita, origem

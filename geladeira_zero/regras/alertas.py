@@ -12,14 +12,25 @@ from datetime import datetime
 import config
 
 
+def _normalizar_data(referencia):
+    """Devolve `referencia` como date, sem a hora; None vira a data de hoje.
+
+    datetime é subclasse de date, por isso é verificado primeiro.
+    """
+    if referencia is None:
+        return config.hoje()
+    if isinstance(referencia, datetime):
+        return referencia.date()
+    return referencia
+
+
 def dias_para_vencer(data_validade, hoje=None):
+    """Dias até a validade: 0 = vence hoje, 1 = amanhã, negativo = vencido.
+
+    Compara só datas de calendário; se `hoje` for datetime, a hora é ignorada.
     """
-    Quantos dias faltam até a validade. Pode ser negativo (já venceu).
-    Subtração de datas devolve um timedelta; .days pega o número de dias.
-    """
-    if hoje is None:
-        hoje = datetime.now()
-    validade = datetime.strptime(data_validade, "%Y-%m-%d")
+    hoje = _normalizar_data(hoje)
+    validade = datetime.strptime(data_validade, "%Y-%m-%d").date()
     return (validade - hoje).days
 
 
@@ -31,8 +42,7 @@ def calcular_alertas(inventario, dias_alerta=config.DIAS_ALERTA, hoje=None):
     A lista é ordenada por urgência: quem vence antes aparece primeiro
     (slide 6). sort + lambda na chave `dias`.
     """
-    if hoje is None:
-        hoje = datetime.now()
+    hoje = _normalizar_data(hoje)
 
     alertas = []
     for item in inventario:

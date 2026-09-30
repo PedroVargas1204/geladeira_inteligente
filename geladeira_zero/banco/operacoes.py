@@ -36,10 +36,10 @@ Camadas (quem pode importar quem)
     streamlit_app.py / main.py   interfaces
 """
 
-from datetime import datetime
+from sqlalchemy import delete, select, update
+from sqlalchemy.exc import IntegrityError
 
-from sqlalchemy import select
-
+import config
 from banco import db
 from regras import inventario as inv
 
@@ -52,6 +52,10 @@ class ItemNaoEncontrado(Exception):
     clica em consumir na segunda. A interface deve mostrar um aviso amigável
     e recarregar, não quebrar.
     """
+
+
+class ReceitaNaoEncontrada(Exception):
+    """A receita não está mais no livro (ou não pertence a este usuário)."""
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +142,7 @@ def _mover_para_historico(usuario_id, item_id, status, base, quantidade=None):
             unidade=item.unidade,
             categoria=categoria,
             status=status,
-            data=datetime.now().strftime("%Y-%m-%d"),
+            data=config.hoje().strftime("%Y-%m-%d"),
         ))
 
         if mover_tudo:
@@ -163,6 +167,86 @@ def descartar(usuario_id, item_id, base, quantidade=None):
     """Marca como descartado. Sem `quantidade`, descarta o item inteiro."""
     return _mover_para_historico(usuario_id, item_id, "descartado", base,
                                  quantidade)
+
+
+# ---------------------------------------------------------------------------
+# LIVRO DE RECEITAS
+# ---------------------------------------------------------------------------
+def registrar_receita(usuario_id, registro):
+    """Guarda a receita no livro e devolve o id.
+
+    Se o usuário já tem a mesma receita (mesmo título e mesma `chave`),
+    só soma uma visualização. O incremento é feito pelo próprio banco
+    (vezes = vezes + 1), então duas abas ao mesmo tempo não perdem contagem.
+    """
+    with db.abrir_sessao() as sessao:
+        existente = sessao.scalars(
+            select(db.ReceitaLivro.id).where(
+                db.ReceitaLivro.usuario_id == usuario_id,
+                db.ReceitaLivro.titulo == registro["titulo"],
+                db.ReceitaLivro.chave == registro["chave"],
+            )
+        ).first()
+
+        if existente is not None:
+            sessao.execute(
+                update(db.ReceitaLivro)
+                .where(db.ReceitaLivro.id == existente)
+                .values(vezes=db.ReceitaLivro.vezes + 1,
+                        visto_em=registro["visto_em"])
+            )
+            sessao.commit()
+            return existente
+
+        linha = db.ReceitaLivro(
+            usuario_id=usuario_id,
+            titulo=registro["titulo"],
+            ingredientes=list(registro["ingredientes"]),
+            modo_preparo=list(registro["modo_preparo"]),
+            ingredientes_usados=list(registro["ingredientes_usados"]),
+            chave=registro["chave"],
+            origem=registro["origem"],
+            criada_em=registro["criada_em"],
+            visto_em=registro["visto_em"],
+            vezes=1,
+        )
+        sessao.add(linha)
+        sessao.commit()
+        return linha.id
+
+
+def remover_receita(usuario_id, receita_id):
+    """Apaga uma receita do livro, conferindo o dono."""
+    with db.abrir_sessao() as sessao:
+        resultado = sessao.execute(
+            delete(db.ReceitaLivro).where(
+                db.ReceitaLivro.id == receita_id,
+                db.ReceitaLivro.usuario_id == usuario_id,
+            )
+        )
+        sessao.commit()
+
+    if resultado.rowcount == 0:
+        raise ReceitaNaoEncontrada(
+            "Esta receita não está mais no seu livro. Atualize a página."
+        )
+
+
+# ---------------------------------------------------------------------------
+# CACHE DE RECEITAS (global, sem dono: não é dado pessoal)
+# ---------------------------------------------------------------------------
+def salvar_no_cache(chave, receita):
+    """Grava ou atualiza UMA entrada do cache, sem tocar nas outras.
+
+    Se duas pessoas criarem a mesma chave no mesmo instante, o banco recusa
+    a segunda inserção; como é só um cache, fica valendo a primeira.
+    """
+    with db.abrir_sessao() as sessao:
+        sessao.merge(db.ReceitaCache(chave=chave, dados=receita))
+        try:
+            sessao.commit()
+        except IntegrityError:
+            sessao.rollback()
 
 
 # ---------------------------------------------------------------------------

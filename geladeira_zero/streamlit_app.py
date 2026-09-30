@@ -22,7 +22,7 @@ Como rodar (dentro da pasta do projeto, onde estão os outros .py):
     python -m streamlit run streamlit_app.py
 """
 
-from datetime import date, datetime
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
@@ -254,7 +254,7 @@ with st.sidebar:
 # PÁGINA: PAINEL
 # ---------------------------------------------------------------------------
 if pagina == "📊 Painel":
-    hora = datetime.now().hour
+    hora = config.agora().hour
     saudacao = "Bom dia" if hora < 12 else "Boa tarde" if hora < 18 else "Boa noite"
     st.header(f"{saudacao}, {nome_usuario}!")
 
@@ -399,7 +399,7 @@ elif pagina == "➕ Adicionar item":
             config.LOCAIS_VALIDOS,
             format_func=lambda l: f"{EMOJI_LOCAL.get(l, '')} {l}",
         )
-        data_compra = st.date_input("Data de compra", value=date.today(),
+        data_compra = st.date_input("Data de compra", value=config.hoje(),
                                     format="DD/MM/YYYY")
 
         # PRÉVIA: mostra quanto o alimento dura em cada local e a data
@@ -475,20 +475,24 @@ elif pagina == "✅ Consumir / Descartar":
     if not estado["inventario"]:
         st.info("Inventário vazio.")
     else:
-        # enumerate ANTES de ordenar preserva a posição real de cada item
-        # na lista original (dois itens iguais não se confundem).
-        pares = sorted(enumerate(estado["inventario"]),
-                       key=lambda par: par[1]["data_validade"])
-        rotulos = {}
-        for posicao, item in pares:
-            rotulo = (f"{item['nome']} — {item['quantidade']}"
-                      f"{item['unidade']} "
-                      f"(vence {data_br(item['data_validade'])})")
-            rotulos[rotulo] = posicao
+        # As opções são os ids do banco, não os rótulos: dois itens com o
+        # mesmo texto continuam sendo opções distintas.
+        por_id = {item["id"]: item for item in estado["inventario"]}
 
-        escolha = st.selectbox("Escolha o item", list(rotulos.keys()))
-        indice = rotulos[escolha]
-        item_sel = estado["inventario"][indice]
+        def rotulo_item(item_id):
+            item = por_id[item_id]
+            local = item["local"]
+            return (f"{item['nome']} — {item['quantidade']}{item['unidade']} · "
+                    f"{EMOJI_LOCAL.get(local, '')} {local} "
+                    f"(vence {data_br(item['data_validade'])})")
+
+        item_id = st.selectbox(
+            "Escolha o item",
+            [item["id"] for item in inv.listar_ordenado(estado["inventario"])],
+            format_func=rotulo_item,
+            key="consumir_item",
+        )
+        item_sel = por_id[item_id]
         qtd_max = float(item_sel["quantidade"])
         unidade = item_sel["unidade"]
 
@@ -510,7 +514,8 @@ elif pagina == "✅ Consumir / Descartar":
             st.caption("Quantidade total: o item sairá do inventário.")
 
         col1, col2 = st.columns(2)
-        if col1.button("✅ Consumido", type="primary", width="stretch"):
+        if col1.button("✅ Consumido", type="primary", width="stretch",
+                       key="botao_consumido"):
             try:
                 operacoes.consumir(USUARIO_ID, item_sel["id"],
                                    estado["base"], qtd)
@@ -520,7 +525,8 @@ elif pagina == "✅ Consumir / Descartar":
                 avisar(f"{qtd}{unidade} de {item_sel['nome']} consumido(s). "
                        "Desperdício evitado! 🌱", "✅")
             st.rerun()
-        if col2.button("🗑️ Descartado", width="stretch"):
+        if col2.button("🗑️ Descartado", width="stretch",
+                       key="botao_descartado"):
             try:
                 operacoes.descartar(USUARIO_ID, item_sel["id"],
                                     estado["base"], qtd)
@@ -647,12 +653,10 @@ elif pagina == "📖 Livro de receitas":
         ORIGENS = {"ia": "🤖 IA", "cache": "💾 cache local",
                    "generica": "receita base"}
 
-        # Percorre do fim para o começo (mais recentes primeiro), levando
-        # junto o índice REAL na lista salva — é ele que o botão de
-        # remover usa, então a exclusão nunca pega a receita errada.
+        # Mais recentes primeiro. O botão de remover usa o id da receita,
+        # não a posição na lista: nunca apaga a receita errada.
         exibidas = 0
-        for indice in range(len(livro) - 1, -1, -1):
-            rec = livro[indice]
+        for rec in reversed(livro):
             texto_busca = (rec.get("titulo", "") + " " +
                            " ".join(rec.get("ingredientes_usados", []))
                            ).lower()
@@ -679,9 +683,13 @@ elif pagina == "📖 Livro de receitas":
                                               start=1):
                         st.markdown(f"**{i}.** {passo}")
 
-                if st.button("🗑️ Remover do livro", key=f"remover_{indice}"):
-                    ia.remover_do_livro(indice, USUARIO_ID)
-                    avisar("Receita removida do livro.", "🗑️")
+                if st.button("🗑️ Remover do livro", key=f"remover_{rec['id']}"):
+                    try:
+                        operacoes.remover_receita(USUARIO_ID, rec["id"])
+                    except operacoes.ReceitaNaoEncontrada as erro:
+                        avisar(str(erro), "⚠️")
+                    else:
+                        avisar("Receita removida do livro.", "🗑️")
                     st.rerun()
 
         if exibidas == 0:
@@ -844,13 +852,9 @@ elif pagina == "💾 Exportar CSV":
     if not estado["historico"]:
         st.info("Histórico vazio. Nada para exportar ainda.")
     else:
-        caminho = persistencia.exportar_csv(estado["historico"])
-        st.success(f"Arquivo gerado em: {caminho}")
-        with open(caminho, "r", encoding="utf-8") as arquivo:
-            conteudo = arquivo.read()
         st.download_button(
             "⬇️ Baixar historico_export.csv",
-            data=conteudo,
+            data=persistencia.gerar_csv(estado["historico"]),
             file_name="historico_export.csv",
             mime="text/csv",
             type="primary",

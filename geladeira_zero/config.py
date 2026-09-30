@@ -9,6 +9,7 @@ Responsável (slides): Pessoa D
 """
 
 import os
+from datetime import datetime, timedelta, timezone
 
 # ---------------------------------------------------------------------------
 # CAMINHOS (paths)
@@ -99,6 +100,24 @@ PERIODO_IMPACTO_DIAS = 30
 
 # Locais de armazenamento válidos.
 LOCAIS_VALIDOS = ["geladeira", "despensa", "freezer"]
+
+# ---------------------------------------------------------------------------
+# DATA E HORA
+# ---------------------------------------------------------------------------
+# Horário de Brasília (UTC−3), sem horário de verão desde 2019. Fixo porque o
+# teste atual é no DF; no app de celular, o fuso passa a ser por usuário.
+FUSO_BRASILIA = timezone(timedelta(hours=-3), "Brasília")
+
+
+def agora():
+    """Data e hora atuais em Brasília, independente do fuso do servidor."""
+    return datetime.now(FUSO_BRASILIA)
+
+
+def hoje():
+    """Data de hoje em Brasília."""
+    return agora().date()
+
 
 # ---------------------------------------------------------------------------
 # CONFIGURAÇÃO DA IA

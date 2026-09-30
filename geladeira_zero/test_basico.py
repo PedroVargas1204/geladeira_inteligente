@@ -17,7 +17,7 @@ COMO RODAR:
     módulos config.py, impacto.py, etc.), para os imports funcionarem.
 """
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import config
 from regras import impacto
@@ -157,6 +157,53 @@ def test_dias_para_vencer_passado_eh_negativo():
     assert alertas.dias_para_vencer(validade, hoje) == -3
 
 
+HOJE_15H = datetime(2026, 9, 30, 15, 0)
+
+def test_dias_para_vencer_ignora_hora_do_dia():
+    """Validade é data de calendário: a hora de 'hoje' não altera o resultado."""
+    casos = {"2026-09-29": -1, "2026-09-30": 0, "2026-10-01": 1}
+    for validade, esperado in casos.items():
+        obtido = alertas.dias_para_vencer(validade, HOJE_15H)
+        assert obtido == esperado, f"{validade}: esperado {esperado}, obtido {obtido}"
+
+
+def test_dias_para_vencer_aceita_date_ou_datetime():
+    """date e datetime (em qualquer hora do dia) dão o mesmo resultado."""
+    referencias = [
+        date(2026, 9, 30),
+        datetime(2026, 9, 30, 0, 0),
+        datetime(2026, 9, 30, 23, 59),
+    ]
+    for hoje in referencias:
+        obtido = alertas.dias_para_vencer("2026-10-03", hoje)
+        assert obtido == 3, f"hoje={hoje!r}: esperado 3, obtido {obtido}"
+
+
+def test_calcular_alertas_ignora_hora_do_dia():
+    """Item que vence hoje fica com 0 dias; o de amanhã, com 1."""
+    inventario = [
+        {"nome": "banana", "data_validade": "2026-09-30"},
+        {"nome": "presunto", "data_validade": "2026-10-01"},
+    ]
+    resultado = alertas.calcular_alertas(inventario, config.DIAS_ALERTA, HOJE_15H)
+    dias_por_nome = {item["nome"]: dias for item, dias in resultado}
+    assert dias_por_nome == {"banana": 0, "presunto": 1}
+
+# ===========================================================================
+# config.agora / config.hoje  — data e hora sempre no horário de Brasília
+# ===========================================================================
+def test_fuso_brasilia_ainda_e_ontem_as_0h30_utc():
+    """00h30 UTC de 01/10 são 21h30 de 30/09 em Brasília: o dia não virou."""
+    momento_utc = datetime(2026, 10, 1, 0, 30, tzinfo=timezone.utc)
+    assert momento_utc.astimezone(config.FUSO_BRASILIA).date() == date(2026, 9, 30)
+
+
+def test_agora_e_hoje_usam_o_fuso_de_brasilia():
+    """agora() vem com fuso UTC−3; hoje() devolve só a data (date)."""
+    assert config.agora().utcoffset() == timedelta(hours=-3)
+    assert type(config.hoje()) is date
+
+
 # ===========================================================================
 # alertas.calcular_alertas  — só itens que vencem em DIAS_ALERTA ou menos
 # ===========================================================================
@@ -273,6 +320,34 @@ def test_estado_ida_e_volta_no_banco():
             engine_teste.dispose()
             db.usar_engine(None)
 
+# ===========================================================================
+# persistencia.gerar_csv / exportar_csv  — exportação do histórico (RF11)
+# ===========================================================================
+def test_gerar_csv_em_memoria():
+    """Colunas fixas e na ordem; campos extras ignorados, ausentes ficam vazios."""
+    historico = [
+        {"id": 7, "nome": "tomate", "quantidade": 0.5, "unidade": "kg",
+         "categoria": "Legumes", "status": "consumido", "data": "2026-09-30"},
+        {"nome": "leite", "status": "descartado"},
+    ]
+    linhas = persistencia.gerar_csv(historico).splitlines()
+    assert linhas == [
+        "nome,quantidade,unidade,categoria,status,data",
+        "tomate,0.5,kg,Legumes,consumido,2026-09-30",
+        "leite,,,,descartado,",
+    ]
+
+
+def test_exportar_csv_grava_o_mesmo_conteudo_em_disco():
+    """A CLI grava em arquivo exatamente o que gerar_csv produz."""
+    import os
+    import tempfile
+
+    historico = [{"nome": "tomate", "status": "consumido"}]
+    with tempfile.TemporaryDirectory() as pasta:
+        caminho = persistencia.exportar_csv(historico, os.path.join(pasta, "h.csv"))
+        with open(caminho, encoding="utf-8", newline="") as arquivo:
+            assert arquivo.read() == persistencia.gerar_csv(historico)
 
 # ===========================================================================
 # auth — cadastro, login e proteção da senha
@@ -585,6 +660,219 @@ def test_salvar_perfil_nao_toca_no_inventario():
             engine_teste.dispose()
             db.usar_engine(None)
 
+# ===========================================================================
+# livro de receitas e cache — gravações pontuais, por id
+# ===========================================================================
+def _receita_teste(titulo):
+    return {"titulo": titulo, "ingredientes": ["1 tomate"],
+            "modo_preparo": ["Misture tudo."]}
+
+
+def test_livro_repete_receita_sem_duplicar_e_mantem_ids():
+    """Mesma receita soma uma visualização; registrar outra não muda os ids."""
+    import tempfile
+
+    from banco import auth
+    from banco import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "livro.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            ia.registrar_no_livro(_receita_teste("Salada"), "ia", ["tomate"], uid)
+            id_salada = persistencia.carregar_livro(uid)[0]["id"]
+
+            ia.registrar_no_livro(_receita_teste("Salada"), "ia", ["tomate"], uid)
+            ia.registrar_no_livro(_receita_teste("Molho"), "ia", ["tomate"], uid)
+
+            livro = persistencia.carregar_livro(uid)
+            assert [(r["titulo"], r["vezes"]) for r in livro] == [("Salada", 2),
+                                                                  ("Molho", 1)]
+            assert livro[0]["id"] == id_salada
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_remover_receita_pelo_id_com_lista_desatualizada():
+    """A tela com a lista velha remove a receita certa, não a da mesma posição."""
+    import tempfile
+
+    from banco import auth
+    from banco import db
+    from banco import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "remover.db")
+        try:
+            ana = auth.cadastrar("ana@email.com", "senhaforte123")
+            bob = auth.cadastrar("bob@email.com", "senhaforte456")
+            for titulo in ("R1", "R2", "R3"):
+                ia.registrar_no_livro(_receita_teste(titulo), "ia", [titulo], ana)
+
+            lista_na_tela = persistencia.carregar_livro(ana)   # aba A
+            operacoes.remover_receita(ana, lista_na_tela[0]["id"])  # aba B tira R1
+            operacoes.remover_receita(ana, lista_na_tela[1]["id"])  # aba A tira R2
+
+            assert [r["titulo"] for r in persistencia.carregar_livro(ana)] == ["R3"]
+
+            for dono, receita_id in ((ana, lista_na_tela[1]["id"]),
+                                     (bob, lista_na_tela[2]["id"])):
+                try:
+                    operacoes.remover_receita(dono, receita_id)
+                    raise AssertionError("removeu receita inexistente ou alheia")
+                except operacoes.ReceitaNaoEncontrada:
+                    pass
+            assert len(persistencia.carregar_livro(ana)) == 1
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_cache_grava_uma_chave_sem_apagar_as_outras():
+    """Cada gravação toca só a própria chave; gravar de novo atualiza."""
+    import tempfile
+
+    from banco import db
+    from banco import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "cache.db")
+        try:
+            operacoes.salvar_no_cache("ovo", _receita_teste("Omelete"))
+            operacoes.salvar_no_cache("tomate", _receita_teste("Molho"))
+            operacoes.salvar_no_cache("ovo", _receita_teste("Ovo cozido"))
+
+            assert persistencia.buscar_no_cache("ovo")["titulo"] == "Ovo cozido"
+            assert persistencia.buscar_no_cache("tomate")["titulo"] == "Molho"
+            assert persistencia.buscar_no_cache("arroz") is None
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_sugerir_receita_com_ia_grava_no_cache_e_no_livro():
+    """Resposta da IA vai para o cache global e para o livro do usuário."""
+    import tempfile
+
+    from banco import auth
+    from banco import db
+
+    consultar_original = ia.consultar_ia
+    ia.consultar_ia = lambda prompt: _receita_teste("Omelete")
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "ia.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            receita, origem = ia.sugerir_receita([], {}, ["tomate", "ovo"], uid)
+
+            assert (receita["titulo"], origem) == ("Omelete", "ia")
+            assert persistencia.buscar_no_cache("ovo+tomate")["titulo"] == "Omelete"
+            assert [r["origem"] for r in persistencia.carregar_livro(uid)] == ["ia"]
+        finally:
+            ia.consultar_ia = consultar_original
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_sugerir_receita_sem_ia_usa_cache_ou_generica():
+    """Sem IA: usa o cache se houver a combinação; senão, a receita genérica."""
+    import tempfile
+
+    from banco import auth
+    from banco import db
+    from banco import operacoes
+
+    def ia_fora_do_ar(prompt):
+        raise RuntimeError("sem internet")
+
+    consultar_original = ia.consultar_ia
+    ia.consultar_ia = ia_fora_do_ar
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "offline.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            operacoes.salvar_no_cache("ovo+tomate", _receita_teste("Omelete"))
+
+            _, origem = ia.sugerir_receita([], {}, ["tomate", "ovo"], uid)
+            assert origem == "cache"
+            _, origem = ia.sugerir_receita([], {}, ["arroz"], uid)
+            assert origem == "generica"
+            assert [r["origem"] for r in persistencia.carregar_livro(uid)] == [
+                "cache", "generica"]
+        finally:
+            ia.consultar_ia = consultar_original
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+# ===========================================================================
+# streamlit_app — telas simuladas com o AppTest do próprio Streamlit
+# ===========================================================================
+def test_consumir_separa_itens_identicos():
+    """Dois itens iguais viram duas opções, e consumir um preserva o outro."""
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+    from banco import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            ids = [operacoes.adicionar_item(uid, _item_teste("tomate", 3.0))
+                   for _ in range(2)]
+
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.session_state["usuario_id"] = uid
+            tela.session_state["nav"] = "✅ Consumir / Descartar"
+            tela.run()
+            assert not tela.exception
+
+            escolha = tela.selectbox(key="consumir_item")
+            assert len(escolha.options) == 2
+
+            escolha.set_value(ids[1]).run()
+            tela.button(key="botao_consumido").click().run()
+            assert not tela.exception
+            restantes = [i["id"] for i
+                         in persistencia.carregar_estado(uid)["inventario"]]
+            assert restantes == [ids[0]]
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+def test_livro_remove_a_receita_do_botao_clicado():
+    """O botão de remover de cada receita apaga exatamente aquela receita."""
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_livro.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            for titulo in ("Salada", "Molho"):
+                ia.registrar_no_livro(_receita_teste(titulo), "ia", [titulo], uid)
+            id_salada, id_molho = [r["id"] for r in persistencia.carregar_livro(uid)]
+
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.session_state["usuario_id"] = uid
+            tela.session_state["nav"] = "📖 Livro de receitas"
+            tela.run()
+            assert not tela.exception
+
+            tela.button(key=f"remover_{id_salada}").click().run()
+            assert not tela.exception
+            assert [r["id"] for r in persistencia.carregar_livro(uid)] == [id_molho]
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
 
 # ===========================================================================
 # EXECUÇÃO SEM PYTEST: roda tudo com asserts e conta os resultados.

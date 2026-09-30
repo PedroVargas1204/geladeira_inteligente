@@ -135,7 +135,7 @@ def _mover_para_historico(inventario, historico, indice, status, base,
         "unidade": item["unidade"],
         "categoria": categoria,
         "status": status,
-        "data": datetime.now().strftime("%Y-%m-%d"),
+        "data": config.hoje().strftime("%Y-%m-%d"),
     }
     historico.append(registro)
 

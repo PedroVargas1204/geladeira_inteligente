@@ -12,10 +12,12 @@ esta camada converte de/para as tabelas do banco.
 
 O que ainda vive em arquivo:
 - base_alimentos.json  -> catálogo do SISTEMA (só leitura), versionado no git;
-- historico_export.csv -> exportação gerada sob demanda (RF11).
+- historico_export.csv -> exportação da CLI (RF11); na web o CSV é gerado
+  em memória e vai direto para o download.
 """
 
 import csv
+import io
 import json
 
 from sqlalchemy import delete, select
@@ -106,6 +108,7 @@ def _usuario_para_dict(u):
 
 def _receita_para_dict(r):
     return {
+        "id": r.id,
         "titulo": r.titulo,
         "ingredientes": list(r.ingredientes or []),
         "modo_preparo": list(r.modo_preparo or []),
@@ -226,7 +229,11 @@ def carregar_livro(usuario_id=config.USUARIO_PADRAO_ID):
 
 
 def salvar_livro(livro, usuario_id=config.USUARIO_PADRAO_ID):
-    """Espelha a lista `livro` (dicionários) na tabela livro_receitas."""
+    """Espelha a lista `livro` na tabela livro_receitas (apaga e regrava).
+
+    Uso exclusivo da migração única (migrar_json_para_db). No app, use
+    operacoes.registrar_receita e operacoes.remover_receita.
+    """
     with db.abrir_sessao() as sessao:
         sessao.execute(
             delete(db.ReceitaLivro)
@@ -251,15 +258,19 @@ def salvar_livro(livro, usuario_id=config.USUARIO_PADRAO_ID):
 # ---------------------------------------------------------------------------
 # CACHE DE RECEITAS OFFLINE (usado por ia.py) — global, sem usuario_id
 # ---------------------------------------------------------------------------
-def carregar_cache():
-    """Devolve o cache como dicionário {chave: receita}."""
+def buscar_no_cache(chave):
+    """Devolve a receita guardada para `chave`, ou None se não houver."""
     with db.abrir_sessao() as sessao:
-        linhas = sessao.scalars(select(db.ReceitaCache)).all()
-        return {linha.chave: linha.dados for linha in linhas}
+        linha = sessao.get(db.ReceitaCache, chave)
+        return linha.dados if linha else None
 
 
 def salvar_cache(cache):
-    """Espelha o dicionário `cache` na tabela receitas_cache."""
+    """Espelha o dicionário `cache` na tabela receitas_cache (apaga e regrava).
+
+    Uso exclusivo da migração única (migrar_json_para_db). No app, use
+    operacoes.salvar_no_cache.
+    """
     with db.abrir_sessao() as sessao:
         sessao.execute(delete(db.ReceitaCache))
         for chave, dados in cache.items():
@@ -268,23 +279,24 @@ def salvar_cache(cache):
 
 
 # ---------------------------------------------------------------------------
-# EXPORTAÇÃO CSV (RF11) — continua em arquivo, é o objetivo dela
+# EXPORTAÇÃO CSV (RF11)
 # ---------------------------------------------------------------------------
-def exportar_csv(historico, caminho=config.ARQ_EXPORT_CSV):
-    """
-    Exporta o histórico para CSV — uma linha por item (RF11).
+def gerar_csv(historico):
+    """Monta o CSV do histórico em memória e devolve o texto (RF11).
 
-    Usa csv.DictWriter: cada item do histórico é um dicionário, e o writer
-    transforma cada dicionário em uma linha do CSV, na ordem das colunas.
+    Não grava nada no servidor: cada usuário recebe só o próprio conteúdo.
     """
     colunas = ["nome", "quantidade", "unidade", "categoria", "status", "data"]
+    buffer = io.StringIO()
+    escritor = csv.DictWriter(buffer, fieldnames=colunas,
+                              restval="", extrasaction="ignore")
+    escritor.writeheader()
+    escritor.writerows(historico)
+    return buffer.getvalue()
 
+
+def exportar_csv(historico, caminho=config.ARQ_EXPORT_CSV):
+    """Grava o CSV em disco e devolve o caminho. Uso: CLI (local, um usuário)."""
     with open(caminho, "w", encoding="utf-8", newline="") as arquivo:
-        escritor = csv.DictWriter(arquivo, fieldnames=colunas)
-        escritor.writeheader()                # primeira linha: nomes das colunas
-        for item in historico:
-            # Monta uma linha só com as colunas que queremos, na ordem certa.
-            linha = {coluna: item.get(coluna, "") for coluna in colunas}
-            escritor.writerow(linha)
-
+        arquivo.write(gerar_csv(historico))
     return caminho
