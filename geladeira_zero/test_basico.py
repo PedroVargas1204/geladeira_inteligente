@@ -525,6 +525,93 @@ def test_conta_antiga_ganha_login_sem_perder_dados():
             engine_teste.dispose()
             db.usar_engine(None)
 
+def _ligar_chaves_estrangeiras(engine):
+    """Faz o SQLite conferir as chaves estrangeiras, como o PostgreSQL do Neon."""
+    from sqlalchemy import event
+
+    event.listen(engine, "connect",
+                 lambda conexao, _: conexao.execute("PRAGMA foreign_keys=ON"))
+    engine.dispose()   # descarta conexões antigas; as novas já nascem com a regra
+
+
+def _linhas_do_usuario(uid):
+    """Conta as linhas do usuário no inventário, no histórico e no livro."""
+    from sqlalchemy import func, select
+
+    from banco import db
+
+    with db.abrir_sessao() as sessao:
+        return [sessao.scalar(select(func.count()).select_from(tabela)
+                              .where(tabela.usuario_id == uid))
+                for tabela in (db.ItemInventario, db.RegistroHistorico,
+                               db.ReceitaLivro)]
+
+
+def _usuario_com_dados(email):
+    """Cria um usuário com um item, um registro no histórico e uma receita."""
+    from banco import auth
+    from banco import operacoes
+
+    uid = auth.cadastrar(email, "senhaforte123")
+    operacoes.adicionar_item(uid, _item_teste("tomate", 3.0))
+    item_id = operacoes.adicionar_item(uid, _item_teste("ovo", 6.0))
+    operacoes.consumir(uid, item_id, persistencia.carregar_base())
+    ia.registrar_no_livro(_receita_teste("Salada"), "ia", ["tomate"], uid)
+    return uid
+
+
+def test_excluir_conta_apaga_tudo_e_so_dela():
+    """Excluir a conta apaga os dados dela e não toca nos de outra pessoa."""
+    import tempfile
+
+    from banco import auth
+    from banco import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "excluir.db")
+        _ligar_chaves_estrangeiras(engine_teste)
+        try:
+            ana = _usuario_com_dados("ana@email.com")
+            bob = _usuario_com_dados("bob@email.com")
+            assert _linhas_do_usuario(ana) == [1, 1, 1]
+
+            auth.excluir_conta(ana, "senhaforte123")
+
+            assert _linhas_do_usuario(ana) == [0, 0, 0]
+            assert auth.dados_da_conta(ana) is None
+            assert _linhas_do_usuario(bob) == [1, 1, 1]
+            assert auth.autenticar("bob@email.com", "senhaforte123") == bob
+            try:
+                auth.autenticar("ana@email.com", "senhaforte123")
+                raise AssertionError("a conta excluída ainda entra")
+            except auth.ErroAutenticacao:
+                pass
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
+def test_excluir_conta_com_senha_errada_nao_apaga_nada():
+    """Senha errada recusa a exclusão e deixa todos os dados no lugar."""
+    import tempfile
+
+    from banco import auth
+    from banco import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "excluir_errada.db")
+        try:
+            ana = _usuario_com_dados("ana@email.com")
+            try:
+                auth.excluir_conta(ana, "senhaerrada99")
+                raise AssertionError("excluiu com a senha errada")
+            except auth.ErroAutenticacao:
+                pass
+            assert _linhas_do_usuario(ana) == [1, 1, 1]
+            assert auth.dados_da_conta(ana) is not None
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
 
 # ===========================================================================
 # operacoes — gravações pontuais (o que permite duas abas ao mesmo tempo)
@@ -1002,6 +1089,40 @@ def test_configuracoes_sem_campo_de_alergias():
             engine_teste.dispose()
             db.usar_engine(None)
 
+def test_excluir_conta_pela_tela():
+    """Sem marcar a confirmação nada é apagado; marcando, a conta some e a sessão fecha."""
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_excluir.db")
+        try:
+            ana = _usuario_com_dados("ana@email.com")
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.session_state["usuario_id"] = ana
+            tela.session_state["nav"] = "⚙️ Configurações"
+            tela.run()
+            assert not tela.exception
+
+            tela.text_input(key="excluir_senha").input("senhaforte123")
+            tela.button(key="excluir_botao").click().run()
+            assert not tela.exception
+            assert auth.dados_da_conta(ana) is not None
+
+            tela.text_input(key="excluir_senha").input("senhaforte123")
+            tela.checkbox(key="excluir_confirmo").check()
+            tela.button(key="excluir_botao").click().run()
+            assert not tela.exception
+            assert auth.dados_da_conta(ana) is None
+            assert _linhas_do_usuario(ana) == [0, 0, 0]
+            assert config.AVISO_CONTA_EXCLUIDA in [s.value for s in tela.success]
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
 
 # ===========================================================================
 # main.py — CLI (o teclado é simulado trocando os leitores da interface)

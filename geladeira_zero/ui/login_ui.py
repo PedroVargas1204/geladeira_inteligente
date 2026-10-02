@@ -48,6 +48,20 @@ def sair():
     st.session_state.clear()
     st.rerun()
 
+def sair(mensagem=None):
+    """
+    Encerra a sessão.
+
+    Limpa TUDO do session_state, não só o usuario_id: coisas como a última
+    receita gerada ou a página aberta pertencem ao usuário anterior e não
+    podem vazar para quem entrar depois na mesma aba.
+
+    `mensagem`, se vier, aparece na tela de entrada (ex.: conta excluída).
+    """
+    st.session_state.clear()
+    if mensagem:
+        st.session_state["aviso_entrada"] = mensagem
+    st.rerun()
 
 # ---------------------------------------------------------------------------
 # TELA DE ENTRADA
@@ -76,6 +90,8 @@ def _desenhar_tela():
     with meio:
         st.title("🧊 Geladeira Zero")
         st.caption("Entre na sua conta para ver a sua geladeira.")
+        if "aviso_entrada" in st.session_state:
+            st.success(st.session_state.pop("aviso_entrada"))
 
         legada = auth.conta_legada_id() if not auth.existe_alguma_conta() else None
         if legada is not None:

@@ -28,7 +28,7 @@ import pandas as pd
 import streamlit as st
 
 import config
-from banco import operacoes, persistencia
+from banco import auth, operacoes, persistencia
 from regras import inventario as inv
 from regras import alertas, ia, impacto, saude
 from ui import login_ui
@@ -845,6 +845,30 @@ elif pagina == "⚙️ Configurações":
     elif any([u.get("idade"), u.get("peso_kg"), u.get("altura_cm")]):
         st.caption("Preencha idade, peso, altura e sexo para ver sua "
                    "estimativa energética.")
+        
+    # EXCLUIR CONTA: apaga tudo do usuário, com senha e confirmação.
+    st.divider()
+    with st.expander("🗑️ Excluir minha conta"):
+        st.caption("Isso apaga para sempre sua geladeira, seu histórico, seu "
+                   "livro de receitas e suas preferências. Não tem volta, viu? "
+                   "Se quiser guardar o histórico, baixe antes em 💾 Exportar CSV.")
+        with st.form("form_excluir"):
+            senha_excluir = st.text_input("Sua senha", type="password",
+                                          key="excluir_senha")
+            confirmo = st.checkbox("Entendo que isso não pode ser desfeito",
+                                   key="excluir_confirmo")
+            excluir = st.form_submit_button("Excluir minha conta",
+                                            key="excluir_botao")
+        if excluir:
+            if not confirmo:
+                st.error("Marque a confirmação para continuar.")
+            else:
+                try:
+                    auth.excluir_conta(USUARIO_ID, senha_excluir)
+                except auth.ErroAutenticacao as erro:
+                    st.error(str(erro))
+                else:
+                    login_ui.sair(config.AVISO_CONTA_EXCLUIDA)
 
 
 # ---------------------------------------------------------------------------

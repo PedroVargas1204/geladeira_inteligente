@@ -18,7 +18,7 @@ Assim ele serve às duas interfaces (e a uma API, no futuro).
 """
 
 import bcrypt
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from banco import db
 
@@ -142,6 +142,18 @@ def trocar_senha(usuario_id, senha_atual, senha_nova):
         if usuario is None or not conferir_senha(senha_atual, usuario.senha_hash):
             raise ErroAutenticacao("Senha atual incorreta.")
         usuario.senha_hash = gerar_hash(senha_nova)
+        sessao.commit()
+        
+def excluir_conta(usuario_id, senha):
+    """Apaga a conta e todos os dados dela, exigindo a senha como confirmação."""
+    with db.abrir_sessao() as sessao:
+        usuario = sessao.get(db.Usuario, usuario_id)
+        if usuario is None or not conferir_senha(senha, usuario.senha_hash):
+            raise ErroAutenticacao("Senha incorreta.")
+        # As outras tabelas apontam para o usuário: apagar as linhas delas antes.
+        for tabela in (db.ItemInventario, db.RegistroHistorico, db.ReceitaLivro):
+            sessao.execute(delete(tabela).where(tabela.usuario_id == usuario_id))
+        sessao.delete(usuario)
         sessao.commit()
 
 

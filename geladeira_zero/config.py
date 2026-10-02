@@ -141,3 +141,7 @@ IA_NOME_VARIAVEL_CHAVE = "IA_API_KEY"
 # Aparece em toda receita e no livro: a sugestão automática pode errar.
 AVISO_RECEITA = ("Meu bem, essa receita é uma sugestão automática e pode errar. "
                  "Tem alergia ou restrição? Confere cada ingrediente antes de cozinhar.")
+
+# Aparece na tela de entrada logo depois de a pessoa excluir a conta.
+AVISO_CONTA_EXCLUIDA = ("Pronto, meu bem. Sua conta e todos os seus dados foram "
+                        "apagados. Se quiser voltar, é só criar uma conta nova.")
