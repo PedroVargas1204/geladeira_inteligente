@@ -36,18 +36,6 @@ def entrar(usuario_id):
     st.session_state[CHAVE_SESSAO] = usuario_id
     st.rerun()
 
-
-def sair():
-    """
-    Encerra a sessão.
-
-    Limpa TUDO do session_state, não só o usuario_id: coisas como a última
-    receita gerada ou a página aberta pertencem ao usuário anterior e não
-    podem vazar para quem entrar depois na mesma aba.
-    """
-    st.session_state.clear()
-    st.rerun()
-
 def sair(mensagem=None):
     """
     Encerra a sessão.
