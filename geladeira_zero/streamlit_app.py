@@ -746,8 +746,7 @@ elif pagina == "🌱 Impacto":
 # ---------------------------------------------------------------------------
 elif pagina == "⚙️ Configurações":
     st.header("⚙️ Preferências")
-    st.caption("A IA usa essas preferências ao criar receitas: restrições "
-               "alimentares, alergias e tempo máximo de preparo.")
+    st.caption("A IA usa essas preferências ao criar receitas.")
     u = estado["usuario"]
 
     # Opções fixas do formulário (rótulos amigáveis -> valor salvo).
@@ -799,11 +798,12 @@ elif pagina == "⚙️ Configurações":
         vegetariano = col6.checkbox("🥦 Vegetariano",
                                     value=u.get("vegetariano", False))
         vegano = col7.checkbox("🌱 Vegano", value=u.get("vegano", False))
-        alergias_txt = st.text_input(
-            "Alergias (separadas por vírgula)",
-            value=", ".join(u.get("alergias", [])),
-            placeholder="ex.: amendoim, camarão, lactose",
-        )
+        if config.ALERGIAS_ATIVAS:
+            alergias_txt = st.text_input(
+                "Alergias (separadas por vírgula)",
+                value=", ".join(u.get("alergias", [])),
+                placeholder="ex.: amendoim, camarão, lactose",
+            )
         tempo = st.slider("⏱️ Tempo máx. de receita (min)", 5, 240,
                           value=u.get("tempo_max_receita", 60))
         salvar = st.form_submit_button("Salvar preferências", type="primary")
@@ -817,7 +817,8 @@ elif pagina == "⚙️ Configurações":
         u["nivel_atividade"] = nivel
         u["vegetariano"] = vegetariano
         u["vegano"] = vegano
-        u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
+        if config.ALERGIAS_ATIVAS:
+            u["alergias"] = [a.strip() for a in alergias_txt.split(",") if a.strip()]
         u["tempo_max_receita"] = tempo
         operacoes.salvar_perfil(USUARIO_ID, u)
         avisar("Preferências salvas!", "⚙️")

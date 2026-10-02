@@ -55,7 +55,7 @@ def montar_prompt(ingredientes, usuario):
         restricoes.append("vegetariana")
     if usuario.get("vegano"):
         restricoes.append("vegana")
-    if usuario.get("alergias"):
+    if config.ALERGIAS_ATIVAS and usuario.get("alergias"):
         restricoes.append("sem " + ", sem ".join(usuario["alergias"]))
 
     texto_restricoes = "; ".join(restricoes) if restricoes else "nenhuma"

@@ -278,6 +278,17 @@ def test_chave_cache_independe_da_ordem():
 def test_chave_cache_normaliza_maiusculas():
     assert ia.chave_cache(["Tomate"]) == ia.chave_cache(["tomate"])
 
+def test_alergias_desligadas_nao_vao_para_a_ia():
+    """A versão de teste sai com alergias desligadas, e o pedido à IA as ignora."""
+    assert config.ALERGIAS_ATIVAS is False
+    usuario = {"alergias": ["amendoim"]}
+    try:
+        assert "amendoim" not in ia.montar_prompt(["tomate"], usuario)
+        config.ALERGIAS_ATIVAS = True
+        assert "amendoim" in ia.montar_prompt(["tomate"], usuario)
+    finally:
+        config.ALERGIAS_ATIVAS = False
+
 
 # ===========================================================================
 # persistencia + banco — ida e volta: o que salvo é o que carrego
@@ -960,6 +971,37 @@ def test_receita_e_livro_mostram_aviso_de_conferir_ingredientes():
         finally:
             engine_teste.dispose()
             db.usar_engine(None)
+            
+def test_configuracoes_sem_campo_de_alergias():
+    """Com as alergias desligadas, Configurações não pede alergia e salva sem erro."""
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_config.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.session_state["usuario_id"] = uid
+            tela.session_state["nav"] = "⚙️ Configurações"
+            tela.run()
+            assert not tela.exception
+
+            rotulos = [campo.label for campo in tela.text_input]
+            assert "Seu nome" in rotulos
+            assert "Alergias (separadas por vírgula)" not in rotulos
+
+            salvar = [b for b in tela.button if b.label == "Salvar preferências"]
+            salvar[0].click().run()
+            assert not tela.exception
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
 
 # ===========================================================================
 # main.py — CLI (o teclado é simulado trocando os leitores da interface)

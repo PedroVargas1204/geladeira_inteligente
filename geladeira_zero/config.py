@@ -101,6 +101,10 @@ PERIODO_IMPACTO_DIAS = 30
 # Locais de armazenamento válidos.
 LOCAIS_VALIDOS = ["geladeira", "despensa", "freezer"]
 
+# Alergias são dado de saúde: desligadas na versão de teste (sem campo na
+# tela e sem envio à IA). Voltam com consentimento no app de celular.
+ALERGIAS_ATIVAS = False
+
 # ---------------------------------------------------------------------------
 # DATA E HORA
 # ---------------------------------------------------------------------------
