@@ -124,6 +124,10 @@ def chave_cache(ingredientes):
     """
     return "+".join(sorted(i.lower() for i in ingredientes))
 
+def tem_restricao(usuario):
+    """Diz se o usuário é vegetariano, vegano ou tem alguma alergia."""
+    return bool(usuario.get("vegetariano") or usuario.get("vegano")
+                or usuario.get("alergias"))
 
 def receita_generica(ingredientes):
     """Último recurso: uma receita que sempre funciona, sem depender de nada."""
@@ -203,7 +207,8 @@ def sugerir_receita(inventario, usuario, ingredientes=None, usuario_id=config.US
     except Exception as erro:
         # Sem chave, sem internet, timeout, erro HTTP... cai no plano B.
         log.warning("IA indisponível, usando o plano B: %r", erro)
-        receita = persistencia.buscar_no_cache(chave)
+        # O cache é global: quem tem restrição não usa receita feita para outra pessoa.
+        receita = None if tem_restricao(usuario) else persistencia.buscar_no_cache(chave)
         origem = "cache"
         if receita is None:
             receita = receita_generica(ingredientes)

@@ -805,6 +805,36 @@ def test_sugerir_receita_sem_ia_usa_cache_ou_generica():
             engine_teste.dispose()
             db.usar_engine(None)
 
+def test_sem_ia_quem_tem_restricao_nao_recebe_receita_do_cache():
+    """Sem IA, quem tem restrição não recebe receita do cache global."""
+    import tempfile
+
+    from banco import auth
+    from banco import db
+    from banco import operacoes
+
+    def ia_fora_do_ar(prompt):
+        raise RuntimeError("sem internet")
+
+    consultar_original = ia.consultar_ia
+    ia.consultar_ia = ia_fora_do_ar
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "restricao.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            # Receita criada para outra pessoa, sem restrição nenhuma.
+            operacoes.salvar_no_cache("ovo+tomate", _receita_teste("Omelete com bacon"))
+
+            for perfil in ({"vegetariano": True}, {"vegano": True},
+                           {"alergias": ["amendoim"]}):
+                receita, origem = ia.sugerir_receita([], perfil, ["tomate", "ovo"], uid)
+                assert origem == "generica", perfil
+                assert receita["titulo"] != "Omelete com bacon"
+        finally:
+            ia.consultar_ia = consultar_original
+            engine_teste.dispose()
+            db.usar_engine(None)
+
 # ===========================================================================
 # streamlit_app — telas simuladas com o AppTest do próprio Streamlit
 # ===========================================================================
