@@ -24,4 +24,4 @@ geladeira_zero/data/*
 geladeira_zero/data/geladeira.db
 
 # Segredos do Streamlit (se você criar um secrets.toml para testar local)
-.streamlit/secrets.toml
+**/.streamlit/secrets.toml
