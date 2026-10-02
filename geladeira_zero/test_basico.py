@@ -930,6 +930,36 @@ def test_adicionar_item_abre_com_as_unidades_certas():
             engine_teste.dispose()
             db.usar_engine(None)
 
+def test_receita_e_livro_mostram_aviso_de_conferir_ingredientes():
+    """A receita na tela e o livro de receitas mostram o aviso de conferir."""
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+    from banco import operacoes
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_aviso.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            operacoes.adicionar_item(uid, _item_teste("tomate", 3.0))
+            ia.registrar_no_livro(_receita_teste("Salada"), "ia", ["tomate"], uid)
+
+            for pagina in ("🍳 Sugerir receita", "📖 Livro de receitas"):
+                tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+                tela.session_state["usuario_id"] = uid
+                tela.session_state["nav"] = pagina
+                # Receita já gerada: a tela mostra sem chamar a IA.
+                tela.session_state["ultima_receita"] = (_receita_teste("Salada"), "ia")
+                tela.run()
+                assert not tela.exception
+                avisos = [aviso.value for aviso in tela.warning]
+                assert config.AVISO_RECEITA in avisos, pagina
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
 
 # ===========================================================================
 # main.py — CLI (o teclado é simulado trocando os leitores da interface)

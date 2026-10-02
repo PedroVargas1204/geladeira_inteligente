@@ -614,6 +614,7 @@ elif pagina == "🍳 Sugerir receita":
             st.divider()
             st.subheader(receita["titulo"])
             st.caption(f"Origem: {rotulo.get(origem, origem)}")
+            st.warning(config.AVISO_RECEITA, icon="⚠️")
 
             col_ing, col_prep = st.columns([1, 2], gap="large")
             with col_ing:
@@ -645,9 +646,11 @@ elif pagina == "📖 Livro de receitas":
         st.info("Seu livro ainda está vazio. Gere uma receita em "
                 "🍳 Sugerir receita e ela aparece aqui automaticamente.")
     else:
+        st.warning(config.AVISO_RECEITA, icon="⚠️")
         busca = st.text_input("🔎 Buscar por título ou ingrediente",
                               placeholder="ex.: camarão")
         consulta = busca.strip().lower()
+        
 
         ORIGENS = {"ia": "🤖 IA", "cache": "💾 cache local",
                    "generica": "receita base"}
