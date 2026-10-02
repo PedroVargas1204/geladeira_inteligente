@@ -431,6 +431,25 @@ def test_senha_curta_e_email_invalido_sao_recusados():
             engine_teste.dispose()
             db.usar_engine(None)
 
+def test_convite_confere_o_codigo_configurado():
+    """Cadastro exige o código configurado; sem código configurado, ninguém entra."""
+    import os
+
+    from banco import auth
+
+    original = os.environ.pop("CODIGO_CONVITE", None)
+    try:
+        assert not auth.convite_valido("qualquer")       # nada configurado: fechado
+        os.environ["CODIGO_CONVITE"] = "Dita2026"
+        assert auth.convite_valido("Dita2026")
+        assert auth.convite_valido("  dita2026 ")       # celular põe maiúscula e espaço
+        assert not auth.convite_valido("errado")
+        assert not auth.convite_valido("")
+        assert not auth.convite_valido("ação")          # acento não quebra a comparação
+    finally:
+        os.environ.pop("CODIGO_CONVITE", None)
+        if original is not None:
+            os.environ["CODIGO_CONVITE"] = original
 
 # ===========================================================================
 # multi-usuário — cada conta enxerga apenas os próprios dados
@@ -1121,6 +1140,49 @@ def test_excluir_conta_pela_tela():
             assert _linhas_do_usuario(ana) == [0, 0, 0]
             assert config.AVISO_CONTA_EXCLUIDA in [s.value for s in tela.success]
         finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+            
+def test_cadastro_pela_tela_exige_convite():
+    """Sem código configurado o cadastro fica fechado; com código, só entra quem acerta."""
+    import os
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+
+    def preencher_cadastro(tela, convite):
+        tela.text_input(key="criar_convite").input(convite)
+        tela.text_input(key="criar_email").input("ana@email.com")
+        tela.text_input(key="criar_senha").input("senhaforte123")
+        tela.text_input(key="criar_repetir").input("senhaforte123")
+        tela.button(key="criar_botao").click().run()
+
+    original = os.environ.pop("CODIGO_CONVITE", None)
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_convite.db")
+        try:
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.run()
+            assert not tela.exception
+            assert "criar_convite" not in [campo.key for campo in tela.text_input]
+
+            os.environ["CODIGO_CONVITE"] = "Dita2026"
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.run()
+            preencher_cadastro(tela, "errado")
+            assert not tela.exception
+            assert not auth.existe_alguma_conta()
+
+            preencher_cadastro(tela, "dita2026")
+            assert not tela.exception
+            assert auth.existe_alguma_conta()
+        finally:
+            os.environ.pop("CODIGO_CONVITE", None)
+            if original is not None:
+                os.environ["CODIGO_CONVITE"] = original
             engine_teste.dispose()
             db.usar_engine(None)
 

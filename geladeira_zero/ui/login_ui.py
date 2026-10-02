@@ -13,11 +13,10 @@ clique. O que sobrevive entre execuções é o `st.session_state`, um
 dicionário por aba do navegador. É lá que guardamos o usuario_id de quem
 entrou. Fechar a aba encerra a sessão.
 """
-
 import streamlit as st
 
+import config
 from banco import auth
-
 
 # Chave usada no st.session_state. Constante para não errar de digitação.
 CHAVE_SESSAO = "usuario_id"
@@ -109,20 +108,33 @@ def _formulario_entrar():
         except auth.ErroAutenticacao as erro:
             st.error(str(erro))
 
-
 def _formulario_criar():
     """Formulário de cadastro de uma conta nova (geladeira vazia)."""
+    if not config.codigo_convite():
+        st.info("O cadastro está fechado por enquanto. "
+                "Se alguém te convidou, avisa essa pessoa, tá?")
+        return
+
     with st.form("form_criar"):
+        convite = st.text_input("Código de convite", key="criar_convite",
+                                help="Quem te chamou para o teste tem o código.")
         nome = st.text_input("Como quer ser chamado?", placeholder="Seu nome")
-        email = st.text_input("E-mail", placeholder="voce@email.com")
+        email = st.text_input("E-mail", placeholder="voce@email.com",
+                              key="criar_email")
         senha = st.text_input(
-            "Senha", type="password",
+            "Senha", type="password", key="criar_senha",
             help=f"Mínimo de {auth.SENHA_MINIMA} caracteres.",
         )
-        repetir = st.text_input("Repita a senha", type="password")
-        enviou = st.form_submit_button("Criar conta", width="stretch")
+        repetir = st.text_input("Repita a senha", type="password",
+                                key="criar_repetir")
+        enviou = st.form_submit_button("Criar conta", width="stretch",
+                                       key="criar_botao")
 
     if enviou:
+        if not auth.convite_valido(convite):
+            st.error("Esse código de convite não confere. "
+                     "Pede de novo pra quem te chamou, tá?")
+            return
         if senha != repetir:
             st.error("As senhas não são iguais.")
             return

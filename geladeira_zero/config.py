@@ -61,6 +61,18 @@ def url_do_banco():
 
     return url
 
+def codigo_convite():
+    """Código exigido no cadastro (CODIGO_CONVITE). Vazio = cadastro fechado."""
+    codigo = os.environ.get("CODIGO_CONVITE", "").strip()
+    if not codigo:
+        try:
+            import streamlit as st
+
+            codigo = str(st.secrets.get("CODIGO_CONVITE", "")).strip()
+        except Exception:
+            codigo = ""
+    return codigo
+
 # Enquanto o app não tem login, todo dado pertence a este usuário.
 # Quando o multi-usuário chegar, este valor virá da sessão de login.
 USUARIO_PADRAO_ID = 1

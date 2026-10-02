@@ -16,13 +16,13 @@ pessoas com a mesma senha geram hashes diferentes.
 Este módulo NÃO conhece Streamlit nem terminal: só fala com o banco.
 Assim ele serve às duas interfaces (e a uma API, no futuro).
 """
+import hmac
 
 import bcrypt
 from sqlalchemy import delete, func, select
 
+import config
 from banco import db
-
-
 # ---------------------------------------------------------------------------
 # ERRO DE NEGÓCIO
 # ---------------------------------------------------------------------------
@@ -74,6 +74,16 @@ def normalizar_email(email):
     """
     return (email or "").strip().lower()
 
+# ---------------------------------------------------------------------------
+# CONVITE
+# ---------------------------------------------------------------------------
+def convite_valido(codigo):
+    """Diz se o código de convite confere. Sem código configurado, ninguém entra."""
+    esperado = config.codigo_convite().lower()
+    informado = (codigo or "").strip().lower()
+    if not esperado:
+        return False
+    return hmac.compare_digest(informado.encode("utf-8"), esperado.encode("utf-8"))
 
 # ---------------------------------------------------------------------------
 # CADASTRO
