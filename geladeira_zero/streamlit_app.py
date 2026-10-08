@@ -761,37 +761,38 @@ elif pagina == "⚙️ Configurações":
         st.markdown("##### Perfil")
         nome = st.text_input("Seu nome", value=u.get("nome", ""))
 
-        st.markdown("##### Sobre você")
-        st.caption("Usado para estimar sua taxa metabólica e gasto "
-                   "energético diário (em breve, no painel).")
-        col1, col2, col3 = st.columns(3)
-        idade = col1.number_input("Idade (anos)", min_value=0, max_value=120,
-                                  value=int(u.get("idade") or 0), step=1)
-        peso = col2.number_input("Peso (kg)", min_value=0.0, max_value=400.0,
-                                 value=float(u.get("peso_kg") or 0.0),
-                                 step=0.5, format="%.1f")
-        altura = col3.number_input("Altura (cm)", min_value=0, max_value=250,
-                                   value=int(u.get("altura_cm") or 0), step=1)
+        if config.SAUDE_ATIVA:
+            st.markdown("##### Sobre você")
+            st.caption("Usado para estimar sua taxa metabólica e gasto "
+                       "energético diário (em breve, no painel).")
+            col1, col2, col3 = st.columns(3)
+            idade = col1.number_input("Idade (anos)", min_value=0, max_value=120,
+                                      value=int(u.get("idade") or 0), step=1)
+            peso = col2.number_input("Peso (kg)", min_value=0.0, max_value=400.0,
+                                     value=float(u.get("peso_kg") or 0.0),
+                                     step=0.5, format="%.1f")
+            altura = col3.number_input("Altura (cm)", min_value=0, max_value=250,
+                                       value=int(u.get("altura_cm") or 0), step=1)
 
-        col4, col5 = st.columns(2)
-        rotulos_sexo = list(OPCOES_SEXO.keys())
-        sexo_atual = u.get("sexo")
-        indice_sexo = 0
-        for i, (rotulo_s, valor_s) in enumerate(OPCOES_SEXO.items()):
-            if valor_s == sexo_atual:
-                indice_sexo = i
-        sexo_rotulo = col4.selectbox("Sexo (usado só no cálculo)",
-                                     rotulos_sexo, index=indice_sexo)
+            col4, col5 = st.columns(2)
+            rotulos_sexo = list(OPCOES_SEXO.keys())
+            sexo_atual = u.get("sexo")
+            indice_sexo = 0
+            for i, (rotulo_s, valor_s) in enumerate(OPCOES_SEXO.items()):
+                if valor_s == sexo_atual:
+                    indice_sexo = i
+            sexo_rotulo = col4.selectbox("Sexo (usado só no cálculo)",
+                                         rotulos_sexo, index=indice_sexo)
 
-        nivel_atual = u.get("nivel_atividade", "sedentario")
-        indice_nivel = (niveis_chaves.index(nivel_atual)
-                        if nivel_atual in niveis_chaves else 0)
-        nivel = col5.selectbox(
-            "Nível de atividade física",
-            niveis_chaves,
-            index=indice_nivel,
-            format_func=lambda n: saude.NIVEIS_ATIVIDADE[n]["rotulo"],
-        )
+            nivel_atual = u.get("nivel_atividade", "sedentario")
+            indice_nivel = (niveis_chaves.index(nivel_atual)
+                            if nivel_atual in niveis_chaves else 0)
+            nivel = col5.selectbox(
+                "Nível de atividade física",
+                niveis_chaves,
+                index=indice_nivel,
+                format_func=lambda n: saude.NIVEIS_ATIVIDADE[n]["rotulo"],
+            )
 
         st.markdown("##### Preferências de receita")
         col6, col7 = st.columns(2)
@@ -810,11 +811,12 @@ elif pagina == "⚙️ Configurações":
 
     if salvar:
         u["nome"] = nome
-        u["idade"] = int(idade) or None
-        u["peso_kg"] = float(peso) or None
-        u["altura_cm"] = int(altura) or None
-        u["sexo"] = OPCOES_SEXO[sexo_rotulo]
-        u["nivel_atividade"] = nivel
+        if config.SAUDE_ATIVA:
+            u["idade"] = int(idade) or None
+            u["peso_kg"] = float(peso) or None
+            u["altura_cm"] = int(altura) or None
+            u["sexo"] = OPCOES_SEXO[sexo_rotulo]
+            u["nivel_atividade"] = nivel
         u["vegetariano"] = vegetariano
         u["vegano"] = vegano
         if config.ALERGIAS_ATIVAS:
@@ -825,7 +827,8 @@ elif pagina == "⚙️ Configurações":
         st.rerun()
 
     # PRÉVIA ENERGÉTICA: aparece quando os dados estão completos.
-    tmb, gasto = saude.resumo_energetico(u)
+    # Com a saúde desligada, a conta nem é feita.
+    tmb, gasto = saude.resumo_energetico(u) if config.SAUDE_ATIVA else (None, None)
     if tmb is not None:
         st.divider()
         st.subheader("Sua estimativa energética")
@@ -842,7 +845,8 @@ elif pagina == "⚙️ Configurações":
         st.caption("Estimativas populacionais, apenas informativas — "
                    "não substituem a avaliação de um profissional de "
                    "saúde ou nutricionista.")
-    elif any([u.get("idade"), u.get("peso_kg"), u.get("altura_cm")]):
+    elif config.SAUDE_ATIVA and any([u.get("idade"), u.get("peso_kg"),
+                                     u.get("altura_cm")]):
         st.caption("Preencha idade, peso, altura e sexo para ver sua "
                    "estimativa energética.")
         

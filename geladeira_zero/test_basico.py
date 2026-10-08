@@ -1108,6 +1108,46 @@ def test_configuracoes_sem_campo_de_alergias():
             engine_teste.dispose()
             db.usar_engine(None)
 
+def test_configuracoes_sem_bloco_de_saude():
+    """Com a saúde desligada, a tela não pede nem mostra saúde, e salvar preserva o gravado."""
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+    from banco import operacoes
+
+    assert config.SAUDE_ATIVA is False
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_saude.db")
+        try:
+            uid = auth.cadastrar("pedro@email.com", "senhaforte123")
+            # Perfil completo: com a saúde ligada, a tela mostraria as calorias.
+            operacoes.salvar_perfil(uid, {"idade": 30, "peso_kg": 70.0,
+                                          "altura_cm": 175, "sexo": "masculino",
+                                          "nivel_atividade": "sedentario"})
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.session_state["usuario_id"] = uid
+            tela.session_state["nav"] = "⚙️ Configurações"
+            tela.run()
+            assert not tela.exception
+
+            assert [campo.label for campo in tela.number_input] == []
+            assert "Nível de atividade física" not in [c.label for c in tela.selectbox]
+            metricas = [m.label for m in tela.metric]
+            assert "Taxa metabólica basal" not in metricas
+
+            salvar = [b for b in tela.button if b.label == "Salvar preferências"]
+            salvar[0].click().run()
+            assert not tela.exception
+            usuario = persistencia.carregar_estado(uid)["usuario"]
+            assert usuario["peso_kg"] == 70.0
+            assert usuario["idade"] == 30
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
 def test_excluir_conta_pela_tela():
     """Sem marcar a confirmação nada é apagado; marcando, a conta some e a sessão fecha."""
     import tempfile

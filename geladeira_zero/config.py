@@ -117,6 +117,10 @@ LOCAIS_VALIDOS = ["geladeira", "despensa", "freezer"]
 # tela e sem envio à IA). Voltam com consentimento no app de celular.
 ALERGIAS_ATIVAS = False
 
+# Idade, peso, altura, sexo e atividade são dado de saúde e só servem ao
+# cálculo de calorias: desligados na versão de teste. Os já gravados ficam.
+SAUDE_ATIVA = False
+
 # ---------------------------------------------------------------------------
 # DATA E HORA
 # ---------------------------------------------------------------------------
