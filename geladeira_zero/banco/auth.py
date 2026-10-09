@@ -40,6 +40,8 @@ class ErroAutenticacao(Exception):
 # ---------------------------------------------------------------------------
 # Tamanho mínimo exigido no cadastro.
 SENHA_MINIMA = 8
+# Limite do bcrypt, em bytes (letras com acento ocupam 2).
+SENHA_MAXIMA_BYTES = 72
 
 
 def gerar_hash(senha):
@@ -60,6 +62,16 @@ def conferir_senha(senha, senha_hash):
     except ValueError:
         # Hash malformado no banco: trata como senha errada, sem quebrar.
         return False
+
+
+def _validar_senha(senha):
+    """Recusa senha curta demais ou acima do limite do bcrypt."""
+    if len(senha or "") < SENHA_MINIMA:
+        raise ErroAutenticacao(
+            f"A senha precisa ter pelo menos {SENHA_MINIMA} caracteres."
+        )
+    if len(senha.encode("utf-8")) > SENHA_MAXIMA_BYTES:
+        raise ErroAutenticacao(config.SENHA_LONGA)
 
 
 # ---------------------------------------------------------------------------
@@ -99,10 +111,7 @@ def cadastrar(email, senha, nome=""):
 
     if "@" not in email or "." not in email:
         raise ErroAutenticacao("Informe um e-mail válido.")
-    if len(senha or "") < SENHA_MINIMA:
-        raise ErroAutenticacao(
-            f"A senha precisa ter pelo menos {SENHA_MINIMA} caracteres."
-        )
+    _validar_senha(senha)
 
     with db.abrir_sessao() as sessao:
         if _buscar_por_email(sessao, email) is not None:
@@ -142,10 +151,7 @@ def autenticar(email, senha):
 
 def trocar_senha(usuario_id, senha_atual, senha_nova):
     """Troca a senha, exigindo a atual como confirmação."""
-    if len(senha_nova or "") < SENHA_MINIMA:
-        raise ErroAutenticacao(
-            f"A senha precisa ter pelo menos {SENHA_MINIMA} caracteres."
-        )
+    _validar_senha(senha_nova)
 
     with db.abrir_sessao() as sessao:
         usuario = sessao.get(db.Usuario, usuario_id)
@@ -219,10 +225,7 @@ def definir_credenciais(usuario_id, email, senha, nome=""):
 
     if "@" not in email or "." not in email:
         raise ErroAutenticacao("Informe um e-mail válido.")
-    if len(senha or "") < SENHA_MINIMA:
-        raise ErroAutenticacao(
-            f"A senha precisa ter pelo menos {SENHA_MINIMA} caracteres."
-        )
+    _validar_senha(senha)
 
     with db.abrir_sessao() as sessao:
         usuario = sessao.get(db.Usuario, usuario_id)

@@ -431,6 +431,60 @@ def test_senha_curta_e_email_invalido_sao_recusados():
             engine_teste.dispose()
             db.usar_engine(None)
 
+
+def test_senha_acima_de_72_bytes_e_recusada_com_aviso():
+    """Senha acima do limite do bcrypt vira aviso amigável, não erro do Python."""
+    import os
+    import tempfile
+
+    from banco import auth
+    from banco import db
+
+    longa = "ç" * 37        # 37 caracteres, mas 74 bytes: cada "ç" ocupa 2
+    no_limite = "a" * 72    # exatamente 72 bytes: ainda vale
+
+    def recusa(funcao, *argumentos):
+        try:
+            funcao(*argumentos)
+        except auth.ErroAutenticacao as erro:
+            assert str(erro) == config.SENHA_LONGA
+        else:
+            raise AssertionError(f"{funcao.__name__} aceitou senha acima de 72 bytes")
+
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = db.criar_engine(os.path.join(pasta, "senha_longa.db"))
+        db.usar_engine(engine_teste)
+        try:
+            # Cadastro: recusa a longa, aceita a do limite.
+            recusa(auth.cadastrar, "longa@email.com", longa)
+            uid = auth.cadastrar("limite@email.com", no_limite)
+            assert auth.autenticar("limite@email.com", no_limite) == uid
+
+            # Troca de senha: recusa e mantém a senha antiga.
+            recusa(auth.trocar_senha, uid, no_limite, longa)
+            assert auth.autenticar("limite@email.com", no_limite) == uid
+
+            # Conta antiga sem login: recusa e não grava o e-mail.
+            with db.abrir_sessao() as sessao:
+                antiga = db.Usuario(nome="Antiga")
+                sessao.add(antiga)
+                sessao.commit()
+                antiga_id = antiga.id
+            recusa(auth.definir_credenciais, antiga_id, "antiga@email.com", longa)
+            with db.abrir_sessao() as sessao:
+                assert sessao.get(db.Usuario, antiga_id).email is None
+
+            # Nenhuma conta foi criada com o e-mail recusado.
+            try:
+                auth.autenticar("longa@email.com", longa)
+                raise AssertionError("conta com senha longa foi criada")
+            except auth.ErroAutenticacao:
+                pass
+        finally:
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+
 def test_convite_confere_o_codigo_configurado():
     """Cadastro exige o código configurado; sem código configurado, ninguém entra."""
     import os

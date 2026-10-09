@@ -158,6 +158,10 @@ IA_NOME_VARIAVEL_CHAVE = "IA_API_KEY"
 AVISO_RECEITA = ("Meu bem, essa receita é uma sugestão automática e pode errar. "
                  "Tem alergia ou restrição? Confere cada ingrediente antes de cozinhar.")
 
+# Aparece quando a senha passa do limite do bcrypt (72 bytes).
+SENHA_LONGA = ("Essa senha ficou comprida demais, meu bem. Use até 72 caracteres: "
+               "letras com acento, como ç e ã, contam como 2.")
+
 # Aparece na tela de entrada logo depois de a pessoa excluir a conta.
 AVISO_CONTA_EXCLUIDA = ("Pronto, meu bem. Sua conta e todos os seus dados foram "
                         "apagados. Se quiser voltar, é só criar uma conta nova.")
