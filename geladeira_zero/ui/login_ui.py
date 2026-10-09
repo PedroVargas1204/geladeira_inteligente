@@ -17,6 +17,7 @@ import streamlit as st
 
 import config
 from banco import auth
+from ui import privacidade
 
 # Chave usada no st.session_state. Constante para não errar de digitação.
 CHAVE_SESSAO = "usuario_id"
@@ -115,6 +116,7 @@ def _formulario_criar():
                 "Se alguém te convidou, avisa essa pessoa, tá?")
         return
 
+    privacidade.mostrar_aviso()
     with st.form("form_criar"):
         convite = st.text_input("Código de convite", key="criar_convite",
                                 help="Quem te chamou para o teste tem o código.")
@@ -127,6 +129,8 @@ def _formulario_criar():
         )
         repetir = st.text_input("Repita a senha", type="password",
                                 key="criar_repetir")
+        aceite = st.checkbox("Tenho 18 anos ou mais e li como meus dados são usados",
+                             key="criar_aceite")
         enviou = st.form_submit_button("Criar conta", width="stretch",
                                        key="criar_botao")
 
@@ -134,6 +138,10 @@ def _formulario_criar():
         if not auth.convite_valido(convite):
             st.error("Esse código de convite não confere. "
                      "Pede de novo pra quem te chamou, tá?")
+            return
+        if not aceite:
+            st.error("Para criar a conta, confirme que tem 18 anos ou mais "
+                     "e que leu como seus dados são usados.")
             return
         if senha != repetir:
             st.error("As senhas não são iguais.")
@@ -143,7 +151,7 @@ def _formulario_criar():
         except auth.ErroAutenticacao as erro:
             st.error(str(erro))
             return
-        st.session_state["flash"] = ("Conta criada. Bem-vindo!", "🎉")
+        st.session_state["flash"] = ("Pronto, meu bem! Agora sua geladeira tem dona.", "🎉")
         entrar(usuario_id)
 
 

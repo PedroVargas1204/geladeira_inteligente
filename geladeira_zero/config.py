@@ -161,3 +161,13 @@ AVISO_RECEITA = ("Meu bem, essa receita é uma sugestão automática e pode erra
 # Aparece na tela de entrada logo depois de a pessoa excluir a conta.
 AVISO_CONTA_EXCLUIDA = ("Pronto, meu bem. Sua conta e todos os seus dados foram "
                         "apagados. Se quiser voltar, é só criar uma conta nova.")
+
+# ---------------------------------------------------------------------------
+# PRIVACIDADE (aviso exibido no cadastro e em Configurações)
+# ---------------------------------------------------------------------------
+RESPONSAVEL_DADOS = "Pedro Vargas"
+CONTATO_PRIVACIDADE = "donadita@gmail.com"
+# Dias, depois do fim do teste, até apagar todas as contas.
+PRAZO_GUARDA_DIAS = 30
+# Mudou o texto do aviso? Atualize a data.
+VERSAO_PRIVACIDADE = "09/10/2026"

@@ -451,6 +451,16 @@ def test_convite_confere_o_codigo_configurado():
         if original is not None:
             os.environ["CODIGO_CONVITE"] = original
 
+def test_texto_de_privacidade_tem_o_essencial():
+    """O aviso diz quem cuida, como falar, o que vai ao Google, o prazo e a idade."""
+    from ui import privacidade
+
+    texto = privacidade.texto_privacidade()
+    for trecho in (config.RESPONSAVEL_DADOS, config.CONTATO_PRIVACIDADE,
+                   "Google", "fora do Brasil", f"{config.PRAZO_GUARDA_DIAS} dias",
+                   "18 anos", "Excluir minha conta", config.VERSAO_PRIVACIDADE):
+        assert trecho in texto, trecho
+
 # ===========================================================================
 # multi-usuário — cada conta enxerga apenas os próprios dados
 # ===========================================================================
@@ -1193,8 +1203,9 @@ def test_cadastro_pela_tela_exige_convite():
     from banco import auth
     from banco import db
 
-    def preencher_cadastro(tela, convite):
+    def preencher_cadastro(tela, convite, aceite=True):
         tela.text_input(key="criar_convite").input(convite)
+        tela.checkbox(key="criar_aceite").set_value(aceite)
         tela.text_input(key="criar_email").input("ana@email.com")
         tela.text_input(key="criar_senha").input("senhaforte123")
         tela.text_input(key="criar_repetir").input("senhaforte123")
@@ -1216,9 +1227,48 @@ def test_cadastro_pela_tela_exige_convite():
             assert not tela.exception
             assert not auth.existe_alguma_conta()
 
+            preencher_cadastro(tela, "dita2026", aceite=False)
+            assert not tela.exception
+            assert not auth.existe_alguma_conta()
+
             preencher_cadastro(tela, "dita2026")
             assert not tela.exception
             assert auth.existe_alguma_conta()
+        finally:
+            os.environ.pop("CODIGO_CONVITE", None)
+            if original is not None:
+                os.environ["CODIGO_CONVITE"] = original
+            engine_teste.dispose()
+            db.usar_engine(None)
+
+def test_aviso_de_privacidade_no_cadastro_e_nas_configuracoes():
+    """O aviso de privacidade aparece antes do cadastro e depois, em Configurações."""
+    import os
+    import tempfile
+
+    from streamlit.testing.v1 import AppTest
+
+    from banco import auth
+    from banco import db
+
+    titulo = "Como cuido dos seus dados"
+    original = os.environ.pop("CODIGO_CONVITE", None)
+    with tempfile.TemporaryDirectory() as pasta:
+        engine_teste = _banco_temporario(pasta, "tela_privacidade.db")
+        try:
+            os.environ["CODIGO_CONVITE"] = "Dita2026"
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.run()
+            assert not tela.exception
+            assert titulo in [e.label for e in tela.expander]
+
+            uid = auth.cadastrar("ana@email.com", "senhaforte123")
+            tela = AppTest.from_file("streamlit_app.py", default_timeout=30)
+            tela.session_state["usuario_id"] = uid
+            tela.session_state["nav"] = "⚙️ Configurações"
+            tela.run()
+            assert not tela.exception
+            assert titulo in [e.label for e in tela.expander]
         finally:
             os.environ.pop("CODIGO_CONVITE", None)
             if original is not None:

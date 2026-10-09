@@ -23,6 +23,7 @@ Como rodar (dentro da pasta do projeto, onde estão os outros .py):
 """
 
 from datetime import datetime
+from ui import login_ui, privacidade
 
 import pandas as pd
 import streamlit as st
@@ -850,8 +851,9 @@ elif pagina == "⚙️ Configurações":
         st.caption("Preencha idade, peso, altura e sexo para ver sua "
                    "estimativa energética.")
         
-    # EXCLUIR CONTA: apaga tudo do usuário, com senha e confirmação.
+    # PRIVACIDADE e EXCLUIR CONTA, no fim da página.
     st.divider()
+    privacidade.mostrar_aviso()
     with st.expander("🗑️ Excluir minha conta"):
         st.caption("Isso apaga para sempre sua geladeira, seu histórico, seu "
                    "livro de receitas e suas preferências. Não tem volta, viu? "
